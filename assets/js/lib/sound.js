@@ -158,8 +158,96 @@ const penta = (i, base = 72) => midi(base + 12 * Math.floor(i / 5) + PENTA[((i %
 const rnd = (a, b) => a + Math.random() * (b - a);
 
 // ---------------------------------------------------------------- la palette
+/** Le jingle : temps des notes du motif (s) et de l'accord final, pour caler les animations. */
+export const JINGLE = { beats: [0.3, 0.42, 0.66, 0.78, 1.02, 1.14, 1.26], hit: 1.4 };
+
 // Registre médium-aigu : les haut-parleurs de téléphone ne rendent presque rien sous 300 Hz.
 export const SOUNDS = {
+  /**
+   * Jingle Café Laitue : la clochette de la porte, « Ca-fé Lai-tue » au marimba
+   * (doublé d'une cloche douce), une petite réponse, puis l'accord final qui scintille.
+   */
+  jingle(c, out, t) {
+    // Le jingle garde son équilibre interne mais reste un cran sous le « tchac » du tampon
+    const o = c.createGain();
+    o.gain.value = 0.55;
+    o.connect(out);
+    [[0, 2637], [0.06, 3136], [0.12, 2349], [0.2, 3520]].forEach(([dt, f]) => strike(c, o, t + dt, f, 'bell', { d: 0.4, v: 0.03 }));
+    const notes = [67, 72, 76, 79, 81, 79, 76];
+    JINGLE.beats.forEach((dt, k) => {
+      const long = k === 1 || k === 3;
+      strike(c, o, t + dt, midi(notes[k]), 'marimba', { d: long ? 0.5 : 0.26, v: k < 4 ? 0.11 : 0.085 });
+      strike(c, o, t + dt, midi(notes[k] + 12), 'bell', { d: 0.22, v: 0.018 });
+    });
+    // Basse pincée et shaker léger sur les croches
+    [[0.3, 48], [0.78, 43], [1.02, 45], [JINGLE.hit, 48]].forEach(([dt, m]) => strike(c, o, t + dt, midi(m), 'wood', { d: 0.4, v: 0.1 }));
+    for (let k = 0; k < 10; k++) noise(c, o, t + 0.3 + k * 0.12, { f: 6500, type: 'highpass', q: 0.5, a: 0.004, d: 0.035, v: k % 2 ? 0.02 : 0.035 });
+    // Accord final + étincelles
+    [72, 76, 79, 84].forEach((m) => strike(c, o, t + JINGLE.hit, midi(m), 'marimba', { d: 1, v: 0.075 }));
+    strike(c, o, t + JINGLE.hit, midi(84), 'bell', { d: 1.3, v: 0.05 });
+    [88, 91, 96].forEach((m, k) => strike(c, o, t + JINGLE.hit + 0.07 + k * 0.05, midi(m), 'bell', { d: 0.6, v: 0.022 }));
+  },
+  /** Le logo se pose à sa place sur la devanture. */
+  land(c, o, t) {
+    strike(c, o, t, 560, 'wood', { d: 0.08, v: 0.1 });
+    strike(c, o, t + 0.02, midi(96), 'bell', { d: 0.35, v: 0.02 });
+  },
+  // ---- Petits bruits de chantier : la boutique se construit
+  /** Un panneau de bois se pose. */
+  clack(c, o, t, { v = 0.12 }) {
+    strike(c, o, t, 430, 'wood', { d: 0.08, v });
+    noise(c, o, t, { f: 1900, q: 1, a: 0.002, d: 0.03, v: v * 0.45 });
+  },
+  /** Plus lourd : la devanture qui s'emboîte. */
+  thunk(c, o, t) {
+    strike(c, o, t, 250, 'wood', { d: 0.12, v: 0.1 });
+    tone(c, o, t, { f: 170, f2: 85, glide: 0.1, a: 0.003, d: 0.12, v: 0.09 });
+    noise(c, o, t, { f: 900, type: 'lowpass', q: 0.7, a: 0.002, d: 0.05, v: 0.08 });
+  },
+  /** Les lettres de l'enseigne, posées une à une (la note monte). */
+  letter(c, o, t, { i = 0 }) {
+    strike(c, o, t, penta(i, 72), 'marimba', { d: 0.14, v: 0.05 });
+    strike(c, o, t, 700 + i * 30, 'wood', { d: 0.035, v: 0.04 });
+  },
+  /** Une lampe s'allume : clic d'interrupteur, puis le filament tinte. */
+  lamp(c, o, t) {
+    noise(c, o, t, { f: 3400, q: 1.4, a: 0.001, d: 0.014, v: 0.16 });
+    tone(c, o, t, { f: 1900, a: 0.001, d: 0.02, v: 0.03 });
+    strike(c, o, t + 0.03, 4200, 'bell', { d: 0.18, v: 0.012 });
+  },
+  /** L'étal roule jusqu'à sa place et s'arrête. */
+  roll(c, o, t, { dur = 0.36 }) {
+    const src = c.createBufferSource();
+    src.buffer = noiseBuffer(c);
+    src.loop = true;
+    const bp = c.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 520;
+    bp.Q.value = 0.8;
+    const am = c.createGain();
+    am.gain.value = 0.55;
+    const lfo = c.createOscillator();
+    lfo.frequency.value = 17;
+    const depth = c.createGain();
+    depth.gain.value = 0.45;
+    lfo.connect(depth).connect(am.gain);
+    src.connect(bp).connect(am).connect(env(c, t, 0.05, 0.1, 0.22, dur)).connect(o);
+    const end = tail(t, 0.05, 0.1, dur);
+    src.start(t, Math.random());
+    lfo.start(t);
+    src.stop(end);
+    lfo.stop(end);
+    strike(c, o, t + dur + 0.04, 300, 'wood', { d: 0.09, v: 0.09 });
+  },
+  /** Le primeur surgit devant sa porte. */
+  hop(c, o, t) {
+    tone(c, o, t, { f: 360, f2: 860, glide: 0.13, a: 0.01, d: 0.14, v: 0.07 });
+    tone(c, o, t, { f: 720, f2: 1720, glide: 0.13, a: 0.01, d: 0.1, v: 0.015 });
+  },
+  /** Le ruban se déroule. */
+  unroll(c, o, t) {
+    noise(c, o, t, { f: 700, f2: 2600, q: 0.7, a: 0.25, d: 0.5, v: 0.09 });
+  },
   /** Bouton quelconque : petit « toc » feutré. */
   tap(c, o, t) {
     tone(c, o, t, { f: 820, f2: 560, a: 0.003, d: 0.07, v: 0.11 });
@@ -409,7 +497,7 @@ function emit(name, opts, dst) {
   const fn = SOUNDS[name];
   if (!c || !fn || !dst) return;
   const now = performance.now();
-  if (now - (lastBy[name] ?? -1e9) < (GAP[name] ?? 50)) return;
+  if (!(opts.delay > 0) && now - (lastBy[name] ?? -1e9) < (GAP[name] ?? 50)) return;
   lastBy[name] = now;
   let out = dst;
   if (opts.gain != null) {
@@ -469,7 +557,7 @@ export function channel() {
 export const soundSupported = !!AC;
 export const soundOn = () => enabled;
 
-export function setSound(on) {
+export function setSound(on, { chime = true } = {}) {
   enabled = !!on;
   try {
     localStorage.setItem(KEY, enabled ? 'on' : 'off');
@@ -478,11 +566,17 @@ export function setSound(on) {
   }
   if (enabled) {
     unlock();
-    play('on');
+    if (chime) play('on');
   } else if (ctx) {
     ctx.suspend().catch(() => {});
   }
   watchers.forEach((fn) => fn(enabled));
+}
+
+/** Latence de sortie estimée (s) : pour caler une animation sur un son. */
+export function latency() {
+  if (!ctx) return 0;
+  return (ctx.outputLatency || ctx.baseLatency || 0) + 0.005;
 }
 
 export function onSoundChange(fn) {

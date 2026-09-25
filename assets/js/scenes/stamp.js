@@ -175,7 +175,7 @@ export async function createStamp({ disc = true, ink = false, text = true, class
     svg,
     parts,
     /** Assemblage : les pièces arrivent de l'extérieur et s'emboîtent. */
-    async play({ delay = 0, speed = 1 } = {}) {
+    async play({ delay = 0, speed = 1, press = true } = {}) {
       if (isReduced()) return;
       const k = 1 / speed;
       const R = rng(11);
@@ -209,11 +209,11 @@ export async function createStamp({ disc = true, ink = false, text = true, class
       list.push(drawIn(parts.rim, { duration: 420 * k, delay: delay + 980 * k }));
       list.push(drawIn(parts.lettuce, { duration: 1300 * k, delay: delay + 1050 * k, easing: EASE.inOut }));
       await Promise.all(list.map((a) => settle(a)));
-      await api.press();
+      if (press) await api.press();
     },
-    /** Coup de tampon. */
-    press() {
-      sfx('stamp', { gain: 0.5 });
+    /** Coup de tampon (« tchac » en option). */
+    press({ sound = true, gain = 0.5 } = {}) {
+      if (sound) sfx('stamp', { gain });
       const a = anim(parts.root, [
         { transform: 'scale(1) rotate(0deg)' },
         { transform: 'scale(1.06) rotate(-2deg)', offset: 0.35 },

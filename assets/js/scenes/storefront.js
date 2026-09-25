@@ -7,6 +7,7 @@ import { createStamp, FONT_DISPLAY, FONT_HAND, BRAND, brandFontsReady } from './
 import { createRibbon } from './ribbon.js';
 import { createCharacter } from './character.js';
 import { crateHeap, crateFront } from './produce.js';
+import { play as sfx } from '../lib/sound.js';
 
 const P = {
   stone: '#F0E6CC',
@@ -359,11 +360,17 @@ export async function createStorefront({ picks } = {}) {
     stamp,
     character: ch,
     stampEl: stampWrap,
+    /** Le tampon lui-même (sans son ombre) : là où se pose le logo de l'écran d'ouverture. */
+    stampTarget: inner,
     charEl: chInner,
+    showStamp(on) {
+      stampWrap.style.opacity = on ? '' : '0';
+    },
     layout() {
       ribbon.layout();
     },
-    async play() {
+    /** La boutique se construit (withStamp: false quand le logo arrive de l'écran d'ouverture). */
+    async play({ withStamp = true } = {}) {
       if (playing) return;
       playing = true;
       if (isReduced()) {
@@ -371,7 +378,18 @@ export async function createStorefront({ picks } = {}) {
         return;
       }
       const T = [];
-      stamp.play({ delay: 0, speed: 1.1 });
+      if (withStamp) stamp.play({ delay: 0, speed: 1.1 });
+      // Petits bruits de chantier, calés sur les animations ci-dessous
+      const at = (name, ms, o = {}) => sfx(name, { ...o, delay: ms });
+      at('unroll', 320);
+      at('clack', 380);
+      at('thunk', 470);
+      at('roll', 720, { dur: 0.3 });
+      signLetters.forEach((L, i) => at('letter', 900 + i * 55, { i }));
+      lamps.forEach((l, i) => at('lamp', 980 + i * 140));
+      at('tumble', 1480, { n: 7, span: 0.5 });
+      at('hop', 1520);
+      at('clack', 1860, { v: 0.09 });
       T.push(anim(facade, [{ opacity: 0 }, { opacity: 1 }], { duration: 500 }));
       T.push(anim(upper, [{ opacity: 0, transform: 'translateY(-10px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 700, delay: 100 }));
       T.push(anim(front, [{ opacity: 0, transform: 'translateY(26px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 650, delay: 250, easing: EASE.snap }));

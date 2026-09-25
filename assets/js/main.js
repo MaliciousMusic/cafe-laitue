@@ -6,6 +6,7 @@ import { openStatus, todayHours, parisNow } from './features/hours.js';
 import { createStamp } from './scenes/stamp.js';
 import { dragScroll, pager } from './lib/hscroll.js';
 import { play as sfx, soundSupported, soundOn, setSound, onSoundChange } from './lib/sound.js';
+import { startSplash } from './features/splash.js';
 
 const SCREENS = ['accueil', 'comptoir', 'etals', 'primeur', 'fidelite'];
 const TITLES = {
@@ -305,6 +306,9 @@ backdrop();
 // --------------------------------------------------------------------------
 // Démarrage
 // --------------------------------------------------------------------------
+
+// Écran d'ouverture (une fois par visite) : le logo s'assemble avant tout le reste
+startSplash();
 
 // Bandeaux horizontaux : glisser à la souris, molette, points de pagination
 $$('.cards, .months, .values, .composer-list').forEach(dragScroll);

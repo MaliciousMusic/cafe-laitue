@@ -4,6 +4,7 @@ import { Ambient } from '../lib/motion.js';
 import { createStorefront } from '../scenes/storefront.js';
 import { inSeason } from '../data/season.js';
 import { parisNow } from '../features/hours.js';
+import { getSplash } from '../features/splash.js';
 
 const LINES = (month) => {
   const fruits = inSeason(month).filter((p) => p.kind === 'fruit').slice(0, 2).map((p) => p.name.split(' ')[0].toLowerCase());
@@ -65,7 +66,28 @@ export default function home(el) {
       ambient.play();
       if (!played) {
         played = true;
-        scene.play();
+        const sp = getSplash();
+        if (!sp) {
+          scene.play();
+          return;
+        }
+        // Le logo de l'écran d'ouverture vient se poser sur la devanture pendant que
+        // la boutique se construit autour ; son tampon reste caché jusque-là.
+        let started = false;
+        scene.showStamp(false);
+        await sp.handover({
+          target: scene.stampTarget,
+          onFlight: () => {
+            started = true;
+            scene.play({ withStamp: false });
+          },
+          onLanded: () => {
+            scene.showStamp(true);
+            scene.stamp.press({ sound: false });
+          },
+        });
+        scene.showStamp(true);
+        if (!started) scene.play();
       }
     },
     leave() {
