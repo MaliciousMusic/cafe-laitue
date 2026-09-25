@@ -80,14 +80,17 @@
     })();
   </script>
   <script>
-    // Après une mise en ligne, recharge une fois quand le nouveau service worker prend la main
-    // (sinon la page pourrait mélanger l'ancien code en cache et le nouveau HTML).
+    // Après une mise en ligne, si la page tourne encore avec l'ancien code (servi par un ancien
+    // service worker), on recharge une fois quand le nouveau prend la main. Le code à jour pose
+    // window.__clFresh : rien à faire. Si l'écran d'ouverture n'a pas pu se jouer, on le rejoue.
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.addEventListener('controllerchange', function () {
-        if (!window.__clReloaded) {
-          window.__clReloaded = true;
-          location.reload();
-        }
+        if (window.__clFresh || window.__clReloaded) return;
+        window.__clReloaded = true;
+        try {
+          if (document.documentElement.classList.contains('has-splash')) sessionStorage.removeItem('cl-splash');
+        } catch (e) {}
+        location.reload();
       });
     }
   </script>
