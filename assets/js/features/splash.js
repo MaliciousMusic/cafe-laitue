@@ -81,7 +81,6 @@ export function startSplash() {
     later(900).then(() => {
       if (choice) return;
       actions.classList.add('is-on');
-      enter.focus({ preventScroll: true });
       autoTimer = setTimeout(() => choose('auto'), AUTO_MS);
     });
     await st.play({ speed: 1.45, press: false });

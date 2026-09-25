@@ -120,17 +120,17 @@ export async function createStamp({ disc = true, ink = false, text = true, class
     });
     const tg = g({ class: 'st-text-top', fill: col.forest, 'font-family': FONT_DISPLAY, 'font-size': 64 });
     const bg = g({ class: 'st-text-bottom', fill: col.forest, 'font-family': FONT_HAND, 'font-size': 40 });
+    // Chaque lettre s'anime via un groupe : Safari ne rafraîchit pas la transformation CSS
+    // d'un <text> SVG (la lettre resterait figée sur sa position de départ).
     top.forEach((L) => {
       if (L.ch === ' ') return;
-      const t = s('text', { x: 0, y: 0, 'text-anchor': 'middle', class: 'st-letter', text: L.ch });
+      const t = g({ class: 'st-letter' }, s('text', { x: 0, y: 0, 'text-anchor': 'middle', text: L.ch }));
       tg.append(g({ transform: `translate(${L.x.toFixed(2)} ${L.y.toFixed(2)}) rotate(${L.rot.toFixed(2)})` }, t));
       parts.letters.push({ el: t, side: -1 });
     });
     bottom.forEach((L) => {
       if (L.ch === ' ') return;
-      const t = s('text', { x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'auto', class: 'st-letter', text: L.ch });
-      // Pour l'arc du bas, la ligne de base est à l'extérieur : on remonte le glyphe vers le centre.
-      t.setAttribute('y', 0);
+      const t = g({ class: 'st-letter' }, s('text', { x: 0, y: 0, 'text-anchor': 'middle', 'dominant-baseline': 'auto', text: L.ch }));
       bg.append(g({ transform: `translate(${L.x.toFixed(2)} ${L.y.toFixed(2)}) rotate(${L.rot.toFixed(2)})` }, t));
       parts.letters.push({ el: t, side: 1 });
     });

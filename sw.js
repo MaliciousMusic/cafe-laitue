@@ -1,7 +1,7 @@
 // Service worker Café Laitue : l'appli (et la carte fidélité) fonctionne hors connexion.
 // Pensez à incrémenter VERSION à chaque mise en ligne.
 
-const VERSION = 'cl-2026-09-25-7';
+const VERSION = 'cl-2026-09-26-1';
 
 const CORE = [
   './',
