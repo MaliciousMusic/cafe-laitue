@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 40 320 320">
+<circle cx="200" cy="200" r="158" fill="#12432B"/>
+<path d="M150 258C125.21 255.61 93.65 241.22 102 210C129.06 192.32 159.99 223.19 170 246C141.27 226.26 101.11 184.03 130 152C172.75 146.24 185.93 205.14 186 240C168.08 205.25 147.12 128.06 168 114C192.82 118.22 205.02 194.95 203 234C193.26 199.62 190.96 127.13 216 118C240.43 128.66 233.84 195.28 222 229C219.83 206.12 230.53 166.88 264 172C285.51 198.15 264.77 214.18 244 224" fill="none" stroke="#B9CDB5" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+<g transform="translate(197 239) rotate(-19) scale(1.1)">
+<clipPath id="c"><path d="M-64 0C-64 44-42 76 0 76C42 76 64 44 64 0A64 15 0 0 1-64 0Z"/></clipPath>
+<path d="M-64 0C-64 44-42 76 0 76C42 76 64 44 64 0A64 15 0 0 1-64 0Z" fill="#12432B"/>
+<g clip-path="url(#c)" fill="none" stroke="#FDFBEB" stroke-width="9" stroke-linecap="round"><path d="M-51.2 3.0Q-52.2 52 -24.0 84M-28.2 7.5Q-28.7 52 -13.2 84M-6.4 8.9Q-6.5 52 -3.0 84M15.4 8.6Q15.7 52 7.2 84M37.1 6.2Q37.9 52 17.4 84M57.6 0.5Q58.8 52 27.0 84M-68 17A68 15.0 0 0 0 68 17M-64 35A64 14.1 0 0 0 64 35M-53 53A53 11.5 0 0 0 53 53M-36 68A36 7.5 0 0 0 36 68"/></g>
+<path d="M-64 0C-64 44-42 76 0 76C42 76 64 44 64 0A64 15 0 0 1-64 0Z" fill="none" stroke="#FDFBEB" stroke-width="10" stroke-linejoin="round"/>
+<path d="M55 7C108-18 122 56 44 55" fill="none" stroke="#FDFBEB" stroke-width="13" stroke-linecap="round"/>
+<path d="M-64 0A64 15 0 0 0 64 0" fill="none" stroke="#FDFBEB" stroke-width="13" stroke-linecap="round"/>
+</g>
+</svg>

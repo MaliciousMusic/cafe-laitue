@@ -1,0 +1,41 @@
+{
+  "id": "./",
+  "name": "Café Laitue — Primeur gourmet",
+  "short_name": "Café Laitue",
+  "description": "Fruits & légumes de saison, jus pressés minute, café de spécialité et votre carte de fidélité. 20 rue Ballainvilliers, Clermont-Ferrand.",
+  "lang": "fr-FR",
+  "dir": "ltr",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FDFBEB",
+  "theme_color": "#FDFBEB",
+  "categories": ["food", "shopping", "lifestyle"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/icons/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ma carte fidélité",
+      "short_name": "Fidélité",
+      "url": "./#fidelite",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Le comptoir : cafés & jus",
+      "short_name": "Comptoir",
+      "url": "./#comptoir",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Horaires & itinéraire",
+      "short_name": "Infos",
+      "url": "./#infos",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

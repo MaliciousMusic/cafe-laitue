@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../assets/css/fonts.css">
+<style>
+  html,body{margin:0;width:100vw;height:100vh;overflow:hidden}
+  body{display:grid;place-items:center;background:var(--bg)}
+  #m{width:var(--s);height:var(--s)}
+  #m svg{width:100%;height:100%;overflow:visible}
+</style></head><body>
+<div id="m"></div>
+<script type="module">
+  // ?v=any|maskable|apple  — rend l'icône à la taille de la fenêtre
+  import { createStamp } from '../../assets/js/scenes/stamp.js';
+  const v = new URLSearchParams(location.search).get('v') || 'any';
+  const root = document.documentElement.style;
+  root.setProperty('--bg', v === 'any' ? 'transparent' : '#12432B');
+  root.setProperty('--s', v === 'maskable' ? '78vmin' : v === 'apple' ? '90vmin' : '100vmin');
+  const st = await createStamp();
+  document.getElementById('m').append(st.svg);
+  document.title = 'ready';
+</script></body></html>

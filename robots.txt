@@ -1,0 +1,29 @@
+# Café Laitue — primeur gourmet, 20 rue Ballainvilliers, Clermont-Ferrand.
+# Moteurs de recherche et assistants IA sont les bienvenus : résumé pour les IA dans /llms.txt
+
+User-agent: *
+Allow: /
+Disallow: /tools/
+
+# Assistants et moteurs IA, autorisés explicitement (recherche générative / GEO)
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: anthropic-ai
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot
+User-agent: Applebot-Extended
+User-agent: Bingbot
+User-agent: DuckAssistBot
+User-agent: MistralAI-User
+User-agent: Meta-ExternalAgent
+User-agent: CCBot
+Allow: /
+Disallow: /tools/
+
+Sitemap: https://maliciousmusic.github.io/cafe-laitue/sitemap.xml

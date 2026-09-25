@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../../assets/css/fonts.css">
+<style>
+  html,body{margin:0;width:1200px;height:630px;overflow:hidden;background:#FDFBEB;font-family:'Bricolage Grotesque',sans-serif}
+  .photo{position:absolute;right:0;top:0;width:560px;height:630px;background:url(../../assets/img/primeur-portrait-1080.webp) 50% 18%/cover}
+  .ribbon{position:absolute;inset:0}
+  .ribbon svg{width:100%;height:100%}
+  .txt{position:absolute;left:70px;top:262px;width:470px;color:#12432B}
+  .txt h1{margin:0;font:400 92px/0.9 'Lilita One';}
+  .txt p{margin:16px 0 0;font:650 29px/1.25 'Bricolage Grotesque'}
+  .txt small{display:block;margin-top:22px;font:400 24px 'Patrick Hand SC';letter-spacing:.06em;color:#4E6E50;white-space:nowrap}
+  .stamp{position:absolute;left:62px;top:28px;width:200px;height:200px}
+  .stamp svg{width:100%;height:100%;overflow:visible}
+</style></head><body>
+<div class="photo"></div>
+<div class="ribbon" id="rb"></div>
+<div class="stamp" id="st"></div>
+<div class="txt">
+  <h1>Café Laitue</h1>
+  <p>Primeur gourmet, jus pressés minute &amp; café de spécialité</p>
+  <small>20 rue Ballainvilliers · Clermont-Ferrand</small>
+</div>
+<script type="module">
+  import { createStamp } from '../../assets/js/scenes/stamp.js';
+  import { createRibbon } from '../../assets/js/scenes/ribbon.js';
+  import { svgRoot } from '../../assets/js/lib/svg.js';
+  const svg = svgRoot('0 0 1200 630');
+  const r = createRibbon({ d: 'M560 700 C620 460 560 300 660 160 C740 40 900 10 1260 60', width: 70, text: 'CAFÉ LAITUE ✦ PRIMEUR GOURMET ✦ ', fontSize: 28, letterSpacing: 3 });
+  svg.append(r.g);
+  document.getElementById('rb').append(svg);
+  r.layout();
+  const st = await createStamp();
+  document.getElementById('st').append(st.svg);
+  document.title = 'ready';
+</script></body></html>
