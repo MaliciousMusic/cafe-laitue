@@ -8,6 +8,9 @@ import { dragScroll, pager } from './lib/hscroll.js';
 import { play as sfx, soundSupported, soundOn, setSound, onSoundChange } from './lib/sound.js';
 import { startSplash } from './features/splash.js';
 
+// Code à jour : pas besoin de recharger quand un nouveau service worker prend la main (voir index.html)
+window.__clFresh = true;
+
 const SCREENS = ['accueil', 'comptoir', 'etals', 'primeur', 'fidelite'];
 const TITLES = {
   accueil: null,
