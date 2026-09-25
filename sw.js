@@ -1,7 +1,7 @@
 // Service worker Café Laitue : l'appli (et la carte fidélité) fonctionne hors connexion.
 // Pensez à incrémenter VERSION à chaque mise en ligne.
 
-const VERSION = 'cl-2026-09-25-4';
+const VERSION = 'cl-2026-09-25-5';
 
 const CORE = [
   './',
@@ -47,7 +47,8 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(VERSION)
-      .then((cache) => cache.addAll(CORE))
+      // cache: 'reload' : ne pas recopier d'anciens fichiers restés dans le cache HTTP
+      .then((cache) => cache.addAll(CORE.map((u) => new Request(u, { cache: 'reload' }))))
       .then(() => self.skipWaiting()),
   );
 });
@@ -66,10 +67,10 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // Pages : réseau d'abord (contenu frais), cache en secours.
+  // Pages : réseau d'abord (contenu frais, revalidé), cache en secours.
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-cache' })
         .then((res) => {
           const copy = res.clone();
           caches.open(VERSION).then((c) => c.put('index.html', copy));
@@ -81,7 +82,24 @@ self.addEventListener('fetch', (event) => {
   }
 
 
-  // Fichiers du site : cache immédiat + mise à jour en arrière-plan.
+  // Code du site (JS, CSS, manifeste) : réseau d'abord lui aussi, pour que page et code
+  // restent de la même version après une mise en ligne ; cache si hors connexion.
+  if (url.origin === self.location.origin && /\.(m?js|css|json|webmanifest)$/.test(url.pathname)) {
+    event.respondWith(
+      fetch(req, { cache: 'no-cache' })
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(VERSION).then((c) => c.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req)),
+    );
+    return;
+  }
+
+  // Polices et images : cache immédiat + mise à jour en arrière-plan.
   if (url.origin === self.location.origin) {
     event.respondWith(
       caches.open(VERSION).then((cache) =>
