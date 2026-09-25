@@ -37,7 +37,8 @@ function spacedLetters(text, { x, y, size, font, spacing, fill, cls }) {
   [...text].forEach((ch, i) => {
     const w = adv[i] - spacing;
     if (ch !== ' ') {
-      out.push(s('text', { x: (cx + w / 2).toFixed(1), y, 'text-anchor': 'middle', 'font-family': font, 'font-size': size, fill, class: cls, text: ch }));
+      // Groupe animable autour du <text> (Safari n'anime pas la transformation CSS d'un texte SVG)
+      out.push(g({ class: cls }, s('text', { x: (cx + w / 2).toFixed(1), y, 'text-anchor': 'middle', 'font-family': font, 'font-size': size, fill, text: ch })));
     }
     cx += adv[i];
   });
