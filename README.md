@@ -2,6 +2,7 @@
 
 Site vitrine « monobloc » pensé comme une petite appli mobile pour **Café Laitue**, primeur gourmet au 20 rue Ballainvilliers, Clermont-Ferrand.
 
+- **Ouverture** : le logo s'assemble en grand au centre ; « Entrer » lance le **jingle** (le logo danse sur les notes et tamponne), puis il rétrécit jusqu'à sa place sur la devanture pendant que la boutique se construit, avec ses **petits bruits de chantier**. Une fois par visite ; `?intro` dans l'adresse le rejoue.
 - **Accueil** : la boutique reproduite en SVG animé (devanture, enseigne, vitrine éclairée, étal garni des fruits du mois, ardoise, le primeur devant la porte), le **tampon** qui s'assemble et la **typo rubanée** qui défile.
 - **Comptoir** : la carte façon lettres murales ; chaque boisson apparaît **en vue éclatée** (expresso, lait, mousse, glaçons, fruits…) puis **s'assemble** dans la tasse. Pour les cafés au lait, la caméra passe au-dessus de la tasse et **ses mains versent le latte art** (cœur à couches ou cygne), avant son clin d'œil « Et voilà ! ». Version glacée, V60 qui coule, jus dont les fruits éclatent dans le verre, et **composeur de jus « sur demande »** avec les ingrédients de saison.
 - **Étals** : l'intérieur de la boutique (briques, mur vert, vins, épicerie) avec 9 cagettes qui suivent **le mois choisi** ; toucher une cagette ouvre la fiche du produit.

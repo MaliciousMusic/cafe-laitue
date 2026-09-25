@@ -51,6 +51,7 @@
   <link rel="modulepreload" href="assets/js/main.js">
   <link rel="modulepreload" href="assets/js/lib/motion.js">
   <link rel="modulepreload" href="assets/js/lib/sound.js">
+  <link rel="modulepreload" href="assets/js/features/splash.js">
   <link rel="modulepreload" href="assets/js/lib/svg.js">
   <link rel="modulepreload" href="assets/js/features/hours.js">
   <link rel="modulepreload" href="assets/js/config.js">
@@ -62,6 +63,22 @@
   <link rel="modulepreload" href="assets/js/scenes/produce.js">
   <link rel="modulepreload" href="assets/js/data/season.js">
   <script>document.documentElement.classList.replace('no-js', 'js');</script>
+  <script>
+    // Écran d'ouverture : une fois par visite, en arrivant sur l'accueil (ni pour les robots,
+    // ni si les animations sont réduites). « ?intro » dans l'adresse le force.
+    (function () {
+      try {
+        var h = location.hash.slice(1);
+        var force = /[?&]intro\b/.test(location.search);
+        if (force || ((h === '' || h === 'accueil') && !sessionStorage.getItem('cl-splash') &&
+            !/bot|crawl|spider|slurp|lighthouse|headless|pagespeed|preview|inspection|facebookexternalhit/i.test(navigator.userAgent) &&
+            !matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+          sessionStorage.setItem('cl-splash', '1');
+          document.documentElement.classList.add('has-splash');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <script>
     // Après une mise en ligne, recharge une fois quand le nouveau service worker prend la main
     // (sinon la page pourrait mélanger l'ancien code en cache et le nouveau HTML).
@@ -221,6 +238,18 @@
   <div class="backdrop" id="backdrop" aria-hidden="true"></div>
 
   <div class="app" id="app">
+    <div class="splash" id="splash" role="dialog" aria-modal="true" aria-label="Bienvenue chez Café Laitue">
+      <div class="splash-bg"></div>
+      <div class="splash-logo"><div class="splash-dance"></div></div>
+      <div class="splash-actions">
+        <button class="splash-enter is-sound" id="splash-enter" type="button" data-sfx="none">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 9.5h3.2L11 5.8v12.4l-4.3-3.7H3.5z"/><path d="M14.6 9.2a4 4 0 0 1 0 5.6M17.3 6.6a7.6 7.6 0 0 1 0 10.8"/></svg>
+          <span>Entrer</span>
+        </button>
+        <button class="splash-alt" id="splash-alt" type="button" data-sfx="none">sans le son</button>
+      </div>
+    </div>
+
     <header class="topbar">
       <a class="brand" href="#accueil" aria-label="Café Laitue, retour à l’accueil">
         <span class="brand-mark" id="brand-mark" aria-hidden="true"></span>
