@@ -50,6 +50,7 @@
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="modulepreload" href="assets/js/main.js">
   <link rel="modulepreload" href="assets/js/lib/motion.js">
+  <link rel="modulepreload" href="assets/js/lib/sound.js">
   <link rel="modulepreload" href="assets/js/lib/svg.js">
   <link rel="modulepreload" href="assets/js/features/hours.js">
   <link rel="modulepreload" href="assets/js/config.js">
@@ -216,9 +217,23 @@
           <span class="brand-sub">Primeur gourmet</span>
         </span>
       </a>
-      <button class="status" id="status" type="button" aria-haspopup="dialog" aria-controls="infos">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span class="status-text" id="status-text">Horaires</span>
+      <button class="sound-btn" id="sound-toggle" type="button" aria-pressed="true" aria-label="Sons de l’appli" data-sfx="none" hidden>
+        <svg class="i" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3.5 9.5h3.2L11 5.8v12.4l-4.3-3.7H3.5z"/>
+          <path class="snd-on" d="M14.6 9.2a4 4 0 0 1 0 5.6M17.3 6.6a7.6 7.6 0 0 1 0 10.8"/>
+          <path class="snd-off" d="M15 9.5l5 5M20 9.5l-5 5"/>
+        </svg>
+      </button>
+      <button class="status" id="status" type="button" aria-haspopup="dialog" aria-controls="infos" aria-label="Horaires et infos pratiques">
+        <span class="sign" aria-hidden="true">
+          <svg class="sign-strings" viewBox="0 0 120 24"><path d="M60 5 23 23M60 5l37 18"/></svg>
+          <span class="sign-board">
+            <span class="sign-face sign-open"><i class="sign-dot"></i><b>Ouvert</b><small id="sign-open-sub">Horaires</small></span>
+            <span class="sign-face sign-closed"><b>Fermé</b><small id="sign-closed-sub">à bientôt</small></span>
+          </span>
+          <span class="sign-nail"></span>
+        </span>
+        <span class="visually-hidden" id="status-text">Horaires</span>
       </button>
     </header>
 
@@ -229,7 +244,7 @@
         <div class="hero">
           <div class="scene scene--storefront" id="scene-storefront" aria-hidden="true"></div>
           <div class="hero-ribbon" id="hero-ribbon" aria-hidden="true"></div>
-          <button class="hero-stamp" id="hero-stamp" type="button" aria-label="Café Laitue, primeur gourmet — rejouer l’animation du tampon"></button>
+          <button class="hero-stamp" id="hero-stamp" type="button" data-sfx="none" aria-label="Café Laitue, primeur gourmet — rejouer l’animation du tampon"></button>
         </div>
         <div class="home-body">
           <p class="eyebrow">20 rue Ballainvilliers · Clermont-Ferrand</p>
@@ -269,11 +284,21 @@
 
         <div class="bar-stage">
           <div class="scene scene--drink" id="scene-drink" aria-hidden="true"></div>
+          <div class="art-pick" id="art-pick" role="group" aria-label="Motif du latte art" hidden>
+            <button type="button" data-art="heart" aria-pressed="true">
+              <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.4c0 5.4-7.5 10-7.5 10z"/></svg>
+              Cœur
+            </button>
+            <button type="button" data-art="swan" aria-pressed="false">
+              <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 14.5c1.6 4 11.4 4.6 14.2-.4 1.3-2.4-.2-5-2.6-4.6-2 .3-2.2 3-.3 3.6"/><path d="M14.8 13.1c-1.2-2-2-4.8-.8-7.1.9-1.7 3.2-2 4.3-.6"/><path d="M18.3 5.4l2.2.6"/><path d="M5 14.8c1.8.6 3.8.7 5.8.1"/></svg>
+              Cygne
+            </button>
+          </div>
           <div class="drink-tools">
             <button class="round-btn" id="drink-prev" type="button" aria-label="Boisson précédente">
               <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>
             </button>
-            <button class="toggle" id="drink-explode" type="button" aria-pressed="false">
+            <button class="toggle" id="drink-explode" type="button" aria-pressed="false" data-sfx="none">
               <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v5M12 16v5M3 12h5M16 12h5M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></svg>
               <span>Vue éclatée</span>
             </button>
@@ -283,6 +308,18 @@
             </button>
             <button class="round-btn" id="drink-next" type="button" aria-label="Boisson suivante">
               <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="composer" id="composer" hidden>
+          <p class="composer-head"><strong>Composez votre jus</strong> 2 à 4 ingrédients, pressés minute devant vous.</p>
+          <div class="composer-list" id="composer-list" role="group" aria-label="Ingrédients disponibles"></div>
+          <div class="composer-foot">
+            <p id="composer-note">Touchez les fruits pour les ajouter au verre.</p>
+            <button type="button" class="toggle" id="composer-reset">
+              <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5"/></svg>
+              <span>Vider</span>
             </button>
           </div>
         </div>
@@ -630,7 +667,7 @@
         <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
         <span></span><button type="button" data-k="0">0</button><button type="button" data-k="del" aria-label="Effacer">⌫</button>
       </div>
-      <button class="btn btn--primary btn--wide" id="pin-confirm" type="button" hidden>Tamponner</button>
+      <button class="btn btn--primary btn--wide" id="pin-confirm" type="button" data-sfx="none" hidden>Tamponner</button>
     </div>
   </dialog>
 

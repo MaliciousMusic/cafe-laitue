@@ -3,6 +3,7 @@
 
 import { s, g, rng, uid } from '../lib/svg.js';
 import { anim, EASE, isReduced, wait } from '../lib/motion.js';
+import { play as sfx } from '../lib/sound.js';
 
 export const PAL = {
   skin: '#E2AE91',
@@ -165,41 +166,79 @@ export function createCharacter({ seed = 4 } = {}) {
   const head = g({ class: 'ch-head' });
   head.style.transformBox = 'view-box';
   head.style.transformOrigin = '130px 140px';
-  const eyes = g({ class: 'ch-eyes' });
-  const pupils = g({ class: 'ch-pupils' }, [
+
+  // Yeux séparés (clignement, clin d'œil) + pupilles qui suivent le regard
+  const pupils = g({ class: 'ch-pupils' });
+  const eyeL = g({ class: 'ch-eye' }, [
     s('ellipse', { cx: 117, cy: 80, rx: 3.3, ry: 3.7, fill: '#2A1E17' }),
-    s('ellipse', { cx: 143, cy: 80, rx: 3.3, ry: 3.7, fill: '#2A1E17' }),
     s('circle', { cx: 118.3, cy: 78.7, r: 1.05, fill: '#fff' }),
+  ]);
+  const eyeR = g({ class: 'ch-eye' }, [
+    s('ellipse', { cx: 143, cy: 80, rx: 3.3, ry: 3.7, fill: '#2A1E17' }),
     s('circle', { cx: 144.3, cy: 78.7, r: 1.05, fill: '#fff' }),
   ]);
-  eyes.append(pupils);
-  eyes.style.transformBox = 'view-box';
-  eyes.style.transformOrigin = '130px 80px';
-  const mouth = s('path', { d: 'M120 109 Q130 118 140 109', fill: 'none', stroke: '#7B3A2C', 'stroke-width': 2.4, 'stroke-linecap': 'round', class: 'ch-mouth' });
-  const mouthOpen = s('path', { d: 'M121 108 Q130 108 139 108 Q137 120 130 120 Q123 120 121 108 Z', fill: '#6E2D24', opacity: 0, class: 'ch-mouth-open' });
+  [[eyeL, 117], [eyeR, 143]].forEach(([e, x]) => {
+    e.style.transformBox = 'view-box';
+    e.style.transformOrigin = `${x}px 80px`;
+  });
+  pupils.append(eyeL, eyeR);
+  const eyes = g({ class: 'ch-eyes' }, pupils);
+
+  // Barbe de trois jours : ombre rasée uniforme (joues, menton, lèvre supérieure)
+  const stubbleId = uid('stubble');
+  const softId = uid('soft');
+  const stubbleD = 'M100 86 C100 112 114 132 130 132 C146 132 160 112 160 86 C158 94 154 99 148 101 C142 102.5 138 101.5 134 101 C131 100.5 129 100.5 126 101 C122 101.5 118 102.5 112 101 C106 99 102 94 100 86 Z';
+  const defs = s('defs', {}, [
+    s('pattern', { id: stubbleId, width: 2.6, height: 2.6, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(20)' }, [
+      s('circle', { cx: 0.8, cy: 0.8, r: 0.42, fill: PAL.beard }),
+      s('circle', { cx: 2.1, cy: 1.9, r: 0.36, fill: PAL.beard }),
+    ]),
+    s('filter', { id: softId, x: '-15%', y: '-15%', width: '130%', height: '130%' }, s('feGaussianBlur', { stdDeviation: 2.2 })),
+    s('filter', { id: `${softId}-t`, x: '-10%', y: '-10%', width: '120%', height: '120%' }, s('feGaussianBlur', { stdDeviation: 0.7 })),
+  ]);
+  const jaw = g({ class: 'ch-jaw' });
+  jaw.append(
+    s('path', { d: stubbleD, fill: PAL.beard, opacity: 0.15, filter: `url(#${softId})` }),
+    s('path', { d: stubbleD, fill: `url(#${stubbleId})`, opacity: 0.5, filter: `url(#${softId}-t)` }),
+  );
+
+  // Bouche articulée : intérieur, dents, langue, lèvres (formes interpolées)
+  const mouthClipId = uid('mouth');
+  const mouthClip = s('path', {});
+  const mouthFill = s('path', { fill: '#5E2620' });
+  const lipTop = s('path', { fill: 'none', stroke: '#7B3A2C', 'stroke-width': 2.2, 'stroke-linecap': 'round' });
+  const lipBottom = s('path', { fill: 'none', stroke: '#9A4F43', 'stroke-width': 1.6, 'stroke-linecap': 'round', opacity: 0 });
+  const mouthG = g({ class: 'ch-mouth' }, [
+    s('clipPath', { id: mouthClipId }, mouthClip),
+    mouthFill,
+    g({ 'clip-path': `url(#${mouthClipId})` }, [
+      s('ellipse', { cx: 130, cy: 121, rx: 6.5, ry: 3.4, fill: '#C95A5E' }),
+      s('rect', { x: 116, y: 104, width: 28, height: 9.6, rx: 2, fill: '#FBF7F0' }),
+    ]),
+    lipBottom,
+    lipTop,
+  ]);
+  jaw.append(mouthG);
+
+  const brows = s('path', { d: 'M110 70 Q117 65.5 124.5 69 M135.5 69 Q143 65.5 150 70', fill: 'none', stroke: PAL.hair, 'stroke-width': 3.4, 'stroke-linecap': 'round', class: 'ch-brows' });
   head.append(
+    defs,
     s('path', { d: 'M117 118 L143 118 L145 150 Q130 158 115 150 Z', fill: PAL.skinShade }),
     s('ellipse', { cx: 98, cy: 88, rx: 7, ry: 11, fill: PAL.skinShade }),
     s('ellipse', { cx: 162, cy: 88, rx: 7, ry: 11, fill: PAL.skinShade }),
     s('path', { d: 'M100 62 C100 38 160 38 160 62 L161 92 C161 117 145 131 130 131 C115 131 99 117 99 92 Z', fill: PAL.skin }),
-    // Barbe de trois jours + bouc + moustache
-    s('path', { d: 'M100 94 C102 118 116 132 130 132 C144 132 158 118 160 94 C156 110 146 123 130 124 C114 123 104 110 100 94 Z', fill: PAL.beard, opacity: 0.2 }),
-    s('path', { d: 'M121 117 Q130 127 139 117 Q138 127 130 130 Q122 127 121 117 Z', fill: PAL.beard, opacity: 0.78 }),
-    s('path', { d: 'M117 105 Q130 99 143 105 Q137 108 130 106.5 Q123 108 117 105 Z', fill: PAL.beard, opacity: 0.85 }),
-    s('ellipse', { cx: 110, cy: 96, rx: 6.5, ry: 3.6, fill: PAL.blush, opacity: 0.28 }),
-    s('ellipse', { cx: 150, cy: 96, rx: 6.5, ry: 3.6, fill: PAL.blush, opacity: 0.28 }),
+    s('ellipse', { cx: 110, cy: 94, rx: 6.5, ry: 3.4, fill: PAL.blush, opacity: 0.26 }),
+    s('ellipse', { cx: 150, cy: 94, rx: 6.5, ry: 3.4, fill: PAL.blush, opacity: 0.26 }),
+    jaw,
     // Nez
     s('path', { d: 'M129 82 Q125.5 95 130 97.5 Q134 98.5 136 95.5', fill: 'none', stroke: PAL.skinDeep, 'stroke-width': 2, 'stroke-linecap': 'round' }),
     // Yeux rieurs
     s('path', { d: 'M112 86 Q117 88.5 122 86 M138 86 Q143 88.5 148 86', fill: 'none', stroke: PAL.skinDeep, 'stroke-width': 1.2, 'stroke-linecap': 'round', opacity: 0.6 }),
     eyes,
-    // Sourcils
-    s('path', { d: 'M110 70 Q117 65.5 124.5 69 M135.5 69 Q143 65.5 150 70', fill: 'none', stroke: PAL.hair, 'stroke-width': 3.4, 'stroke-linecap': 'round', class: 'ch-brows' }),
-    mouthOpen,
-    mouth,
-    // Cheveux : côtés courts, golfes dégagés, volume coiffé vers l'arrière
-    s('path', { d: 'M99 82 C95 70 95 58 100 48 C98 40 102 30 110 25 C114 18 124 14 134 15 C142 13 152 16 158 22 C166 28 168 38 165 48 C167 58 166 70 161 82 C160 74 159 68 156 63 C154 58 150 55 144 54 C138 50.5 130 50 122 52 C115 53 109 56 106 60 C103 65 101 73 99 82 Z', fill: PAL.hair }),
-    s('path', { d: 'M108 44 C114 30 130 22 150 24 M112 51 C120 39 136 33 153 35 M147 22 C157 26 162 34 162 44 M117 27 C124 21 133 19 141 20', fill: 'none', stroke: '#54432F', 'stroke-width': 1.6, 'stroke-linecap': 'round', opacity: 0.8 }),
+    brows,
+    // Cheveux : courts, coiffés vers l'arrière, volume discret
+    s('path', { d: 'M99 82 C95 70 95 59 99 51 C101 43 106 36 114 31.5 C121 27.5 129 26 137 26.5 C146 27 154 30 159 36 C164 42 166 50 165 58 C165 66 164 74 161 82 C160 74 159 68 156 63 C154 58 150 55 144 54 C138 51 130 50.5 122 52 C115 53 109 56 106 60 C103 65 101 73 99 82 Z', fill: PAL.hair }),
+    s('path', { d: 'M109 44 C117 35 131 31 147 33.5 M113 50 C121 42 135 38 151 40.5 M147 32 C155 35 160 41 161.5 49', fill: 'none', stroke: '#54432F', 'stroke-width': 1.5, 'stroke-linecap': 'round', opacity: 0.75 }),
     s('path', { d: 'M99.5 78 L102 77.5 L101.8 91 L99.8 89.5 Z M160.5 78 L158 77.5 L158.2 91 L160.2 89.5 Z', fill: PAL.hair, opacity: 0.85 }),
   );
   torso.append(head);
@@ -235,16 +274,102 @@ export function createCharacter({ seed = 4 } = {}) {
   );
   torso.append(armR);
 
-  const parts = { root, body, torso, head, eyes, pupils, mouth, mouthOpen, armR, forearm, crate: crateG };
+  // Formes de bouche (visèmes) : largeur, coins, lèvre du haut, lèvre du bas
+  const VISEMES = {
+    smile: { w: 10, cy: 108, tc: 116, bc: 116 },
+    happy: { w: 12, cy: 106.5, tc: 117, bc: 123 },
+    A: { w: 8.6, cy: 108.4, tc: 113, bc: 125.5 },
+    E: { w: 10.6, cy: 108, tc: 114.2, bc: 121.2 },
+    O: { w: 6.2, cy: 109.6, tc: 105.2, bc: 124.5 },
+    M: { w: 9, cy: 109.5, tc: 112.2, bc: 112.6 },
+  };
+  let mouthState = { ...VISEMES.smile };
+  function drawMouth(m) {
+    const L = (130 - m.w).toFixed(2);
+    const R = (130 + m.w).toFixed(2);
+    const cy = m.cy.toFixed(2);
+    const top = `M${L} ${cy}Q130 ${m.tc.toFixed(2)} ${R} ${cy}`;
+    const shape = `${top}Q130 ${m.bc.toFixed(2)} ${L} ${cy}Z`;
+    mouthClip.setAttribute('d', shape);
+    mouthFill.setAttribute('d', shape);
+    lipTop.setAttribute('d', top);
+    lipBottom.setAttribute('d', `M${(130 - m.w + 1.6).toFixed(2)} ${(m.cy + 0.6).toFixed(2)}Q130 ${(m.bc + 0.8).toFixed(2)} ${(130 + m.w - 1.6).toFixed(2)} ${(m.cy + 0.6).toFixed(2)}`);
+    const open = Math.max(0, m.bc - m.tc);
+    lipBottom.setAttribute('opacity', Math.min(0.85, open / 6).toFixed(2));
+    jaw.setAttribute('transform', `translate(0 ${(open * 0.16).toFixed(2)})`);
+    mouthState = m;
+  }
+  drawMouth(mouthState);
+  const mix = (a, b, t) => ({ w: a.w + (b.w - a.w) * t, cy: a.cy + (b.cy - a.cy) * t, tc: a.tc + (b.tc - a.tc) * t, bc: a.bc + (b.bc - a.bc) * t });
+  const ease = (k) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+  let talkRun = 0;
+  /** Articule pendant `ms` : suite de syllabes interpolées, puis retour au sourire. */
+  function talk(ms = 1400) {
+    const my = ++talkRun;
+    if (isReduced()) return Promise.resolve();
+    const seq = ['A', 'E', 'M', 'O', 'A', 'E', 'A', 'M', 'E', 'O'];
+    // Chaque syllabe fait un petit murmure (voyelle filtrée)
+    const pick = (prev) => {
+      let v;
+      do v = seq[Math.floor(Math.random() * seq.length)]; while (VISEMES[v] === prev);
+      sfx('voice', { v });
+      return VISEMES[v];
+    };
+    return new Promise((resolve) => {
+      const start = performance.now();
+      let from = { ...mouthState };
+      let to = pick(null);
+      let t0 = start;
+      let dur = 85;
+      let hold = 120;
+      let ending = false;
+      const frame = (now) => {
+        if (my !== talkRun) return resolve();
+        const k = Math.min(1, (now - t0) / dur);
+        drawMouth(mix(from, to, ease(k)));
+        if (ending && k >= 1) return resolve();
+        if (!ending && now - t0 > hold) {
+          ending = now - start > ms;
+          from = { ...mouthState };
+          to = ending ? VISEMES.smile : pick(to);
+          dur = ending ? 140 : 70 + Math.random() * 40;
+          hold = 100 + Math.random() * 90;
+          t0 = now;
+        }
+        requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+    });
+  }
+
+  const parts = { root, body, torso, head, eyes, eyeL, eyeR, pupils, mouth: mouthG, armR, forearm, crate: crateG };
   let waving = false;
 
   const api = {
     g: root,
     parts,
     blink() {
-      return anim(eyes, [{ transform: 'scaleY(1)' }, { transform: 'scaleY(.08)' }, { transform: 'scaleY(1)' }], {
-        duration: 190, easing: 'ease-in-out', fill: 'none',
-      });
+      const kf = [{ transform: 'scaleY(1)' }, { transform: 'scaleY(.08)' }, { transform: 'scaleY(1)' }];
+      anim(eyeL, kf, { duration: 190, easing: 'ease-in-out', fill: 'none' });
+      return anim(eyeR, kf, { duration: 190, easing: 'ease-in-out', fill: 'none' });
+    },
+    /** Clin d'œil complice. */
+    wink() {
+      anim(brows, [{ transform: 'translateY(0)' }, { transform: 'translateY(1.5px)' }, { transform: 'translateY(0)' }], { duration: 460, fill: 'none' });
+      return anim(eyeR, [{ transform: 'scaleY(1)' }, { transform: 'scaleY(.06)', offset: 0.3 }, { transform: 'scaleY(.06)', offset: 0.7 }, { transform: 'scaleY(1)' }], { duration: 460, easing: 'ease-in-out', fill: 'none' });
+    },
+    /** Grand sourire (true) ou sourire simple (false). */
+    smile(big = true) {
+      talkRun++;
+      const from = { ...mouthState };
+      const to = big ? VISEMES.happy : VISEMES.smile;
+      const t0 = performance.now();
+      const step = (now) => {
+        const k = Math.min(1, (now - t0) / 220);
+        drawMouth(mix(from, to, ease(k)));
+        if (k < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
     },
     idle(ambient) {
       ambient.add(anim(torso, [{ transform: 'translateY(0) scaleY(1)' }, { transform: 'translateY(-1.2px) scaleY(1.006)' }], {
@@ -284,17 +409,11 @@ export function createCharacter({ seed = 4 } = {}) {
       [up, bend, shake, down, unbend].forEach((a) => a && a.cancel());
       waving = false;
     },
-    /** Fait « parler » la bouche pendant `ms`. */
+    /** Fait parler la bouche pendant `ms` (les sourcils suivent). */
     async say(ms = 1400) {
       if (isReduced()) return;
-      const n = Math.max(2, Math.round(ms / 180));
-      const frames = [];
-      for (let i = 0; i <= n; i++) frames.push({ opacity: i % 2 ? 1 : 0.15 });
-      frames[frames.length - 1] = { opacity: 0 };
-      const a = anim(mouthOpen, frames, { duration: ms, easing: 'steps(1)', fill: 'none' });
-      const b = anim(mouth, [{ opacity: 1 }, { opacity: 0.4 }, { opacity: 1 }], { duration: ms, fill: 'none' });
-      await wait(ms);
-      return [a, b];
+      anim(brows, [{ transform: 'translateY(0)' }, { transform: 'translateY(-1.6px)' }, { transform: 'translateY(0)' }], { duration: Math.min(ms, 900), easing: EASE.inOut, fill: 'none' });
+      await talk(ms);
     },
     /** Oriente le regard (valeurs -1..1). */
     look(x = 0, y = 0) {

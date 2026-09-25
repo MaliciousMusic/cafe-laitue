@@ -3,10 +3,11 @@
 Site vitrine « monobloc » pensé comme une petite appli mobile pour **Café Laitue**, primeur gourmet au 20 rue Ballainvilliers, Clermont-Ferrand.
 
 - **Accueil** : la boutique reproduite en SVG animé (devanture, enseigne, vitrine éclairée, étal garni des fruits du mois, ardoise, le primeur devant la porte), le **tampon** qui s'assemble et la **typo rubanée** qui défile.
-- **Comptoir** : la carte façon lettres murales ; chaque boisson apparaît **en vue éclatée** (expresso, lait, mousse, glaçons, fruits…) puis **s'assemble** dans la tasse. Version glacée, V60 qui coule, jus qui se remplit.
+- **Comptoir** : la carte façon lettres murales ; chaque boisson apparaît **en vue éclatée** (expresso, lait, mousse, glaçons, fruits…) puis **s'assemble** dans la tasse. Pour les cafés au lait, la caméra passe au-dessus de la tasse et **ses mains versent le latte art** (cœur à couches ou cygne), avant son clin d'œil « Et voilà ! ». Version glacée, V60 qui coule, jus dont les fruits éclatent dans le verre, et **composeur de jus « sur demande »** avec les ingrédients de saison.
 - **Étals** : l'intérieur de la boutique (briques, mur vert, vins, épicerie) avec 9 cagettes qui suivent **le mois choisi** ; toucher une cagette ouvre la fiche du produit.
 - **Le primeur** : son portrait illustré et animé (respiration, clignement, salut, bulles de saison), bascule vers la vraie photo.
 - **Fidélité** : carte à 10 tampons dans le téléphone, validée par le **code du primeur**, installable comme une appli (PWA, fonctionne hors connexion).
+- **Petits sons** sur tout ce qui se touche (bulles des onglets, toc de la pancarte, tintements de la tasse qui s'assemble, filet de lait, plouf des fruits, xylophone des mois, « tchac » du tampon, murmure du primeur quand il parle…). Synthétisés dans le navigateur, sans fichier audio ; bouton haut-parleur en haut pour les couper. Sur iPhone, ils suivent le mode silencieux.
 
 Aucune dépendance, aucun build : HTML + CSS + JavaScript (modules ES) + SVG généré.
 
@@ -110,6 +111,7 @@ mentions-legales.html   404.html   manifest.webmanifest   sw.js
 robots.txt   sitemap.xml   llms.txt
 assets/css/app.css      assets/css/fonts.css (polices locales)
 assets/js/main.js       navigation, statut d'ouverture, feuilles, PWA
+assets/js/lib/          animation, SVG, bandeaux défilants, sons (sound.js)
 assets/js/config.js     données du commerce, règles fidélité
 assets/js/data/         saisons, carte du comptoir
 assets/js/scenes/       tampon, ruban, personnage, boutique, étagères, boissons, portrait

@@ -4,6 +4,7 @@ import { Ambient, anim, EASE, isReduced } from '../lib/motion.js';
 import { createPortrait } from '../scenes/portrait.js';
 import { inSeason, stallPick } from '../data/season.js';
 import { parisNow, openStatus } from '../features/hours.js';
+import { play as sfx } from '../lib/sound.js';
 
 function lines(month) {
   const fruits = inSeason(month).filter((p) => p.kind === 'fruit').slice(0, 3).map((p) => p.name.split(' ')[0].toLowerCase());
@@ -80,6 +81,7 @@ export default function owner(el) {
   // Illustration ↔ photo (révélation circulaire depuis le bouton)
   let showingPhoto = false;
   toggle.addEventListener('click', () => {
+    sfx('shutter');
     showingPhoto = !showingPhoto;
     toggle.setAttribute('aria-pressed', String(showingPhoto));
     toggle.querySelector('span').textContent = showingPhoto ? 'Voir l’illustration' : 'Voir la photo';

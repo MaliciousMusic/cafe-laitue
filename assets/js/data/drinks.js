@@ -26,7 +26,8 @@ export const DRINKS = {
       { k: 'milk', h: 20, label: 'Lait chaud', sub: 'chauffé à la vapeur' },
       { k: 'foam', h: 19, label: 'Mousse de lait', sub: 'épaisse et onctueuse' },
     ],
-    garnish: { k: 'art', label: 'Latte art', sub: 'dessiné à la main' },
+    garnish: { k: 'art', label: 'Latte art', sub: 'versé à la main' },
+    surface: 'coffee',
   },
   v60: {
     name: 'V60',
@@ -45,7 +46,8 @@ export const DRINKS = {
       { k: 'milk', h: 62, label: 'Lait chauffé', sub: 'à la vapeur, velouté' },
       { k: 'foam', h: 13, label: 'Micro-mousse', sub: 'une fine couche' },
     ],
-    garnish: { k: 'art', label: 'Latte art', sub: 'dessiné à la main' },
+    garnish: { k: 'art', label: 'Latte art', sub: 'versé à la main' },
+    surface: 'coffee',
     icedVersion: {
       vessel: 'tall',
       layers: [
@@ -66,7 +68,8 @@ export const DRINKS = {
       { k: 'milk', h: 27, label: 'Lait micro-moussé', sub: 'texture soyeuse' },
       { k: 'foam', h: 6, label: 'Fine mousse', sub: 'juste un voile' },
     ],
-    garnish: { k: 'rosetta', label: 'Rosetta', sub: 'latte art' },
+    garnish: { k: 'art', label: 'Latte art', sub: 'versé à la main' },
+    surface: 'coffee',
   },
   matcha: {
     name: 'Matcha latte',
@@ -78,7 +81,8 @@ export const DRINKS = {
       { k: 'milk', h: 58, label: 'Lait', sub: 'chauffé à la vapeur' },
       { k: 'foam', h: 14, label: 'Mousse', sub: 'légère' },
     ],
-    garnish: { k: 'art', color: '#8DB35A', label: 'Cœur matcha', sub: 'pour la gourmandise' },
+    garnish: { k: 'art', label: 'Latte art', sub: 'lait sur matcha' },
+    surface: 'matcha',
     icedVersion: {
       vessel: 'tall',
       layers: [
@@ -99,7 +103,8 @@ export const DRINKS = {
       { k: 'milk', h: 20, label: 'Lait chaud', sub: 'chauffé à la vapeur' },
       { k: 'foam', h: 16, label: 'Mousse', sub: 'onctueuse' },
     ],
-    garnish: { k: 'cinnamon', label: 'Cannelle', sub: 'une pincée' },
+    garnish: { k: 'art', cinnamon: true, label: 'Latte art & cannelle', sub: 'une pincée' },
+    surface: 'chai',
     icedVersion: {
       vessel: 'tall',
       layers: [
@@ -170,5 +175,15 @@ export const JUICE_COLOR = {
   gingembre: '#E6C765', raisin: '#8C3B6E', peche: '#F5A55C', abricot: '#F4A13C', fraise: '#E0485A',
   melon: '#F3A35A', pasteque: '#EC6072', framboise: '#D8436A', prune: '#9A4A7A', kiwi: '#9BC24A',
   clementine: '#F59A30', figue: '#A8607A', myrtille: '#5A4E8E', cerise: '#B02A3E', coing: '#E3CB6A',
-  rhubarbe: '#E07A8A',
+  rhubarbe: '#E07A8A', concombre: '#B9D58C', betterave: '#9C2748',
+};
+
+// Ingrédients du jus « sur demande » : toujours là + selon la saison (voir data/season.js).
+export const JUICE_BASE = ['pomme', 'poire', 'orange', 'carotte', 'citron', 'gingembre'];
+export const JUICE_SEASONAL = ['raisin', 'peche', 'abricot', 'fraise', 'framboise', 'melon', 'pasteque', 'kiwi', 'clementine', 'prune', 'myrtille', 'concombre', 'betterave'];
+export const JUICE_LABEL = {
+  pomme: 'Pomme', poire: 'Poire', orange: 'Orange', carotte: 'Carotte', citron: 'Citron', gingembre: 'Gingembre',
+  raisin: 'Raisin', peche: 'Pêche', abricot: 'Abricot', fraise: 'Fraise', framboise: 'Framboise', melon: 'Melon',
+  pasteque: 'Pastèque', kiwi: 'Kiwi', clementine: 'Clémentine', prune: 'Prune', myrtille: 'Myrtille',
+  concombre: 'Concombre', betterave: 'Betterave',
 };

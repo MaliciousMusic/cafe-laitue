@@ -4,6 +4,8 @@
 import { anim, EASE, isReduced } from './lib/motion.js';
 import { openStatus, todayHours, parisNow } from './features/hours.js';
 import { createStamp } from './scenes/stamp.js';
+import { dragScroll, pager } from './lib/hscroll.js';
+import { play as sfx, soundSupported, soundOn, setSound, onSoundChange } from './lib/sound.js';
 
 const SCREENS = ['accueil', 'comptoir', 'etals', 'primeur', 'fidelite'];
 const TITLES = {
@@ -122,6 +124,7 @@ document.addEventListener('click', (e) => {
   const id = a.getAttribute('href').slice(1);
   if (SCREENS.includes(id)) {
     e.preventDefault();
+    sfx('tab', { i: SCREENS.indexOf(id) });
     go(id, { push: true });
   } else if (id === 'infos') {
     e.preventDefault();
@@ -140,6 +143,7 @@ $('.tabbar')?.addEventListener('keydown', (e) => {
   if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
   const i = SCREENS.indexOf(current) + (e.key === 'ArrowRight' ? 1 : -1);
   const id = SCREENS[(i + SCREENS.length) % SCREENS.length];
+  sfx('tab', { i: SCREENS.indexOf(id) });
   go(id, { push: true });
   $(`.tab[data-tab="${id}"]`)?.focus();
 });
@@ -150,12 +154,14 @@ $('.tabbar')?.addEventListener('keydown', (e) => {
 
 export function openSheet(dlg) {
   if (!dlg || dlg.open) return;
+  sfx('open');
   dlg.showModal();
   anim(dlg, [{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }], { duration: 420, easing: EASE.out, fill: 'none' });
 }
 
 export function closeSheet(dlg) {
   if (!dlg || !dlg.open) return;
+  sfx('close');
   const a = anim(dlg, [{ transform: 'translateY(0)' }, { transform: 'translateY(105%)' }], { duration: 260, easing: EASE.in, fill: 'forwards' });
   const done = () => {
     dlg.close();
@@ -198,7 +204,19 @@ $$('dialog.sheet').forEach((dlg) => {
   void grip;
 });
 
-$('#status')?.addEventListener('click', () => openSheet($('#infos')));
+$('#status')?.addEventListener('click', () => {
+  // La pancarte se balance (et toque) quand on la touche
+  sfx('sign');
+  anim($('#status .sign'), [
+    { transform: 'rotate(0deg)' },
+    { transform: 'rotate(-13deg)' },
+    { transform: 'rotate(9deg)' },
+    { transform: 'rotate(-5deg)' },
+    { transform: 'rotate(2deg)' },
+    { transform: 'rotate(0deg)' },
+  ], { duration: 900, easing: 'ease-out', fill: 'none' });
+  openSheet($('#infos'));
+});
 $('#today')?.addEventListener('click', () => openSheet($('#infos')));
 
 // --------------------------------------------------------------------------
@@ -211,6 +229,8 @@ function refreshStatus() {
   if (btn) {
     btn.dataset.state = st.state;
     $('#status-text').textContent = st.short;
+    if (st.state === 'closed') $('#sign-closed-sub').textContent = st.sub;
+    else $('#sign-open-sub').textContent = st.sub;
     btn.setAttribute('aria-label', `${st.label}. Voir les horaires et infos pratiques`);
   }
   const today = $('#today-hours');
@@ -231,6 +251,22 @@ createStamp().then((st) => {
   const host = $('#brand-mark');
   if (host) host.append(st.svg);
 });
+
+// --------------------------------------------------------------------------
+// Sons : bouton haut-parleur de la barre du haut
+// --------------------------------------------------------------------------
+
+const soundBtn = $('#sound-toggle');
+if (soundBtn && soundSupported) {
+  const syncSound = (on) => {
+    soundBtn.setAttribute('aria-pressed', String(on));
+    soundBtn.title = on ? 'Couper les sons' : 'Activer les sons';
+  };
+  syncSound(soundOn());
+  onSoundChange(syncSound);
+  soundBtn.hidden = false;
+  soundBtn.addEventListener('click', () => setSound(!soundOn()));
+}
 
 // --------------------------------------------------------------------------
 // Installation (PWA) + service worker
@@ -269,6 +305,10 @@ backdrop();
 // --------------------------------------------------------------------------
 // Démarrage
 // --------------------------------------------------------------------------
+
+// Bandeaux horizontaux : glisser à la souris, molette, points de pagination
+$$('.cards, .months, .values, .composer-list').forEach(dragScroll);
+$$('.cards').forEach((el) => pager(el, { label: 'Carte' }));
 
 SCREENS.forEach((id) => {
   const el = document.getElementById(id);

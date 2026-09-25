@@ -211,7 +211,7 @@ function stand(picks) {
 /**
  * @param {{ picks: Array<{id:string,name:string}>, open: boolean }} o
  */
-export async function createStorefront({ picks, open = true } = {}) {
+export async function createStorefront({ picks } = {}) {
   await brandFontsReady();
   const R = rng(21);
   const svg = svgRoot('0 0 400 420', { preserveAspectRatio: 'xMidYMax meet', class: 'storefront' });
@@ -292,18 +292,6 @@ export async function createStorefront({ picks, open = true } = {}) {
     s('rect', { x: 349, y: 262, width: 4, height: 22, rx: 2, fill: P.brass }),
     s('rect', { x: 258, y: 352, width: 114, height: 6, fill: '#CFC4A8' }),
   ]);
-  // Pancarte OUVERT / FERMÉ
-  const sign = g({ class: 'sf-sign' });
-  sign.style.transformBox = 'view-box';
-  sign.style.transformOrigin = '315px 214px';
-  const signText = s('text', { x: 315, y: 236, 'text-anchor': 'middle', 'font-family': FONT_DISPLAY, 'font-size': 9.5, fill: BRAND.forest, 'letter-spacing': 0.6, text: open ? 'OUVERT' : 'FERMÉ' });
-  sign.append(
-    s('path', { d: 'M315 214 L299 226 M315 214 L331 226', stroke: '#C9C1A8', 'stroke-width': 0.8 }),
-    s('circle', { cx: 315, cy: 214, r: 1.3, fill: P.brass }),
-    s('rect', { x: 295, y: 225, width: 40, height: 15, rx: 2.5, fill: BRAND.cream }),
-    signText,
-  );
-  door.append(sign);
   front.append(door);
 
   // Enseigne
@@ -375,9 +363,6 @@ export async function createStorefront({ picks, open = true } = {}) {
     layout() {
       ribbon.layout();
     },
-    setOpen(isOpen) {
-      signText.textContent = isOpen ? 'OUVERT' : 'FERMÉ';
-    },
     async play() {
       if (playing) return;
       playing = true;
@@ -435,9 +420,6 @@ export async function createStorefront({ picks, open = true } = {}) {
       ch.idle(ambient);
       stamp.idle(ambient);
       ribbon.run(ambient);
-      ambient.add(anim(sign, [{ transform: 'rotate(-3deg)' }, { transform: 'rotate(3deg)' }], {
-        duration: 2600, direction: 'alternate', iterations: Infinity, easing: EASE.inOut, fill: 'none',
-      }));
       upper.querySelectorAll('.sf-geraniums').forEach((f, i) => ambient.add(anim(f, [{ transform: 'rotate(-1.5deg)' }, { transform: 'rotate(1.5deg)' }], {
         duration: 3000 + i * 500, direction: 'alternate', iterations: Infinity, easing: EASE.inOut, fill: 'none',
       })));

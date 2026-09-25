@@ -206,6 +206,7 @@ h3 {
 .brand-name {
   font-family: var(--font-display);
   font-size: 21px;
+  white-space: nowrap;
   letter-spacing: 0.01em;
   color: var(--forest);
 }
@@ -218,43 +219,166 @@ h3 {
   margin-top: 3px;
 }
 
-.status {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 34px;
-  padding: 0 12px 0 10px;
-  border-radius: 999px;
-  background: var(--cream-2);
-  border: 1px solid var(--line);
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: background 0.2s;
+/* Haut-parleur : couper / remettre les petits sons de l'appli */
+.sound-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  margin-right: -8px;
+  border-radius: 50%;
+  color: var(--sage-ink);
+  transition: background 0.2s, color 0.2s, transform 0.2s var(--ease-out);
 }
-.status:active {
-  background: var(--cream-3);
+.sound-btn .i {
+  width: 21px;
+  height: 21px;
+}
+.sound-btn:active {
+  transform: scale(0.88);
+  background: var(--cream-2);
+}
+.sound-btn[aria-pressed='true'] .snd-off,
+.sound-btn[aria-pressed='false'] .snd-on {
+  display: none;
+}
+.sound-btn[aria-pressed='false'] {
+  color: #9aa79a;
 }
 
-.status-dot {
+/* Pancarte « Ouvert / Fermé » suspendue, qui se retourne selon l'heure */
+.status {
+  position: relative;
+  align-self: stretch;
+  flex: none;
+  width: 128px;
+  margin-right: -4px;
+  border-radius: 0;
+}
+.status:focus-visible {
+  outline-offset: -3px;
+}
+.sign {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--sat) + 0px);
+  height: 68px;
+  perspective: 520px;
+  transform-origin: 50% 7px;
+  animation: sign-swing 3.4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes sign-swing {
+  from {
+    transform: rotate(-2.4deg);
+  }
+  to {
+    transform: rotate(2.4deg);
+  }
+}
+.sign-strings {
+  position: absolute;
+  left: calc(50% - 59px);
+  top: 2px;
+  width: 120px;
+  height: 24px;
+  fill: none;
+  stroke: #8a7a5c;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.sign-nail {
+  position: absolute;
+  left: 50%;
+  top: 3px;
   width: 9px;
   height: 9px;
+  margin-left: -2.5px;
   border-radius: 50%;
-  background: #b9b3a0;
-  box-shadow: 0 0 0 3px rgba(185, 179, 160, 0.25);
+  background: radial-gradient(circle at 35% 35%, #f3dca0, #b8914a 60%, #8a6a2e);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
-.status[data-state='open'] .status-dot {
+.sign-board {
+  position: absolute;
+  left: 8px;
+  right: 2px;
+  top: 21px;
+  height: 44px;
+  transform-style: preserve-3d;
+  transition: transform 0.9s cubic-bezier(0.3, 1.55, 0.45, 1);
+}
+.status[data-state='closed'] .sign-board {
+  transform: rotateY(180deg);
+}
+.sign-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 1px;
+  border-radius: 9px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow:
+    inset 0 0 0 2px var(--forest),
+    inset 0 0 0 4px var(--cream),
+    inset 0 0 0 5px rgba(18, 67, 43, 0.25),
+    0 6px 14px -6px rgba(18, 67, 43, 0.55);
+}
+.sign-face b {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sign-face small {
+  font-family: var(--font-hand);
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.sign-open {
+  background: var(--cream);
+  color: var(--forest);
+}
+.sign-open small {
+  color: var(--sage-ink);
+}
+.sign-closed {
+  background: #b8452f;
+  color: var(--cream);
+  transform: rotateY(180deg);
+  box-shadow:
+    inset 0 0 0 2px #7c2a1b,
+    inset 0 0 0 4px #b8452f,
+    inset 0 0 0 5px rgba(253, 251, 235, 0.35),
+    0 6px 14px -6px rgba(124, 42, 27, 0.6);
+}
+.sign-dot {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  margin-top: -9px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
   background: #2f9b5c;
   box-shadow: 0 0 0 3px rgba(47, 155, 92, 0.2);
   animation: pulse 2.4s var(--ease-out) infinite;
 }
-.status[data-state='soon'] .status-dot {
+.status[data-state='soon'] .sign-dot {
   background: var(--carrot);
   box-shadow: 0 0 0 3px rgba(233, 122, 44, 0.22);
 }
-.status[data-state='closed'] .status-dot {
-  background: #c9563f;
-  box-shadow: 0 0 0 3px rgba(201, 86, 63, 0.18);
+.status[data-state='soon'] .sign-open small {
+  color: #b85a18;
 }
 
 @keyframes pulse {
@@ -674,6 +798,146 @@ h3 {
   flex: none;
 }
 
+.art-pick {
+  position: absolute;
+  z-index: 3;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(253, 251, 235, 0.92);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 16px -10px rgba(18, 67, 43, 0.5);
+  transition: opacity 0.3s, transform 0.3s var(--ease-out);
+}
+.art-pick.is-busy {
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+}
+.art-pick button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 10px 0 8px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--forest);
+  transition: background 0.2s, color 0.2s;
+}
+.art-pick .i {
+  width: 16px;
+  height: 16px;
+}
+.art-pick button[aria-pressed='true'] {
+  background: var(--forest);
+  color: var(--cream);
+}
+
+.composer {
+  margin: 10px 10px 0;
+  padding: 10px 0 10px;
+  border-radius: var(--r-lg);
+  background: var(--cream-2);
+  border: 1px solid var(--line);
+}
+.composer-head {
+  padding: 0 14px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.composer-head strong {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 18px;
+  color: var(--forest);
+}
+.composer-list {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.composer-list::-webkit-scrollbar {
+  display: none;
+}
+.ing {
+  flex: none;
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  width: 64px;
+  padding: 6px 2px 5px;
+  border-radius: 16px;
+  background: var(--cream);
+  border: 1.5px solid var(--line);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--forest);
+  transition: transform 0.2s var(--ease-back), background 0.2s, border-color 0.2s, opacity 0.2s;
+}
+.ing svg {
+  width: 38px;
+  height: 32px;
+  overflow: visible;
+}
+.ing:active {
+  transform: scale(0.94);
+}
+.ing[aria-pressed='true'] {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: var(--cream);
+}
+.ing[aria-pressed='true']::after {
+  content: '✓';
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--carrot);
+  color: #fff;
+  font-size: 11px;
+}
+.ing.is-season::before {
+  content: 'saison';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--sage-3);
+  color: var(--sage-ink);
+  font-family: var(--font-hand);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  line-height: 14px;
+}
+.ing[disabled] {
+  opacity: 0.35;
+}
+.composer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 14px 0;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
 .board {
   display: flex;
   gap: 6px;
@@ -782,6 +1046,7 @@ h3 {
 
 .months {
   min-height: 48px;
+  scroll-padding-inline: var(--gutter);
   display: flex;
   gap: 6px;
   padding: 6px var(--gutter) 8px;
@@ -869,9 +1134,10 @@ h3 {
   gap: 8px;
   list-style: none;
   margin: 0;
-  padding: 10px var(--gutter) 6px;
+  padding: 10px var(--gutter) 4px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--gutter);
   scrollbar-width: none;
   flex: none;
 }
@@ -913,6 +1179,44 @@ h3 {
 .card p {
   font-size: 13px;
   color: var(--ink-2);
+}
+
+.pager {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 0 4px;
+}
+.pager button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 22px;
+}
+.pager button::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--sage-2);
+  transition: width 0.3s var(--ease-out), background 0.3s;
+}
+.pager button[aria-current='true']::before {
+  width: 20px;
+  background: var(--forest);
+}
+.is-dragging {
+  scroll-snap-type: none !important;
+  cursor: grabbing !important;
+  user-select: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cards,
+  .months,
+  .values,
+  .composer-list {
+    cursor: grab;
+  }
 }
 
 .calendar {
@@ -1514,11 +1818,39 @@ h3 {
     width: 34px;
     height: 34px;
   }
+  .sign-board {
+    top: 19px;
+    height: 40px;
+  }
+  .sign-face b {
+    font-size: 18px;
+  }
+}
+
+/* Barre du haut sur petits téléphones : logo, haut-parleur et pancarte tiennent sur une ligne */
+@media (max-width: 380px) {
+  .topbar {
+    gap: 4px;
+  }
+  .sound-btn {
+    width: 32px;
+    margin-right: -6px;
+  }
 }
 
 @media (max-width: 350px) {
   :root {
     --gutter: 14px;
+  }
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+  }
+  .brand-name {
+    font-size: 18px;
+  }
+  .status {
+    width: 116px;
   }
   .actions {
     grid-template-columns: 1fr 1fr;

@@ -126,28 +126,6 @@ export class Ambient {
   }
 }
 
-/** Petit « tchac » synthétisé (tampon) — uniquement après un geste de l'utilisateur. */
-let _ctx;
-export function thump(volume = 0.25) {
-  try {
-    _ctx = _ctx || new (window.AudioContext || window.webkitAudioContext)();
-    const ctx = _ctx;
-    const t = ctx.currentTime;
-    const o = ctx.createOscillator();
-    const gn = ctx.createGain();
-    o.type = 'sine';
-    o.frequency.setValueAtTime(150, t);
-    o.frequency.exponentialRampToValueAtTime(48, t + 0.12);
-    gn.gain.setValueAtTime(volume, t);
-    gn.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
-    o.connect(gn).connect(ctx.destination);
-    o.start(t);
-    o.stop(t + 0.18);
-  } catch (e) {
-    /* audio indisponible */
-  }
-}
-
 export function vibrate(pattern = 18) {
   try {
     navigator.vibrate && navigator.vibrate(pattern);

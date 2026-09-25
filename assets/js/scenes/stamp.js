@@ -3,6 +3,7 @@
 
 import { s, g, svgRoot, wobblyCircle, cursiveLoops, rng, uid } from '../lib/svg.js';
 import { anim, drawIn, EASE, isReduced, settle } from '../lib/motion.js';
+import { play as sfx } from '../lib/sound.js';
 
 export const BRAND = { forest: '#12432B', sage: '#849E83', cream: '#FDFBEB' };
 export const FONT_DISPLAY = '"Lilita One", "Arial Black", system-ui, sans-serif';
@@ -185,6 +186,8 @@ export async function createStamp({ disc = true, ink = false, text = true, class
         }));
       }
       list.push(drawIn(parts.ring, { duration: 1000 * k, delay: delay + 120 * k }));
+      // Les lettres se posent en cascade (petits crans), puis « tchac »
+      sfx('ratchet', { n: parts.letters.length, gap: 0.042 * k, delay: delay + 644 * k });
       parts.letters.forEach((L, i) => {
         const r = R();
         const d = 80 + r * 90;
@@ -210,6 +213,7 @@ export async function createStamp({ disc = true, ink = false, text = true, class
     },
     /** Coup de tampon. */
     press() {
+      sfx('stamp', { gain: 0.5 });
       const a = anim(parts.root, [
         { transform: 'scale(1) rotate(0deg)' },
         { transform: 'scale(1.06) rotate(-2deg)', offset: 0.35 },

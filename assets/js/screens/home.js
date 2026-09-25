@@ -3,7 +3,7 @@
 import { Ambient } from '../lib/motion.js';
 import { createStorefront } from '../scenes/storefront.js';
 import { inSeason } from '../data/season.js';
-import { openStatus, parisNow } from '../features/hours.js';
+import { parisNow } from '../features/hours.js';
 
 const LINES = (month) => {
   const fruits = inSeason(month).filter((p) => p.kind === 'fruit').slice(0, 2).map((p) => p.name.split(' ')[0].toLowerCase());
@@ -41,7 +41,7 @@ export default function home(el) {
     });
   };
 
-  const ready = createStorefront({ picks, open: openStatus().state !== 'closed' }).then((sc) => {
+  const ready = createStorefront({ picks }).then((sc) => {
     scene = sc;
     host.append(sc.svg);
     sc.layout();
@@ -56,7 +56,6 @@ export default function home(el) {
       sc.greet(lines[line]);
     });
     stampBtn?.addEventListener('click', () => sc.stamp.play({ speed: 1.3 }));
-    document.addEventListener('cl:status', (e) => sc.setOpen(e.detail.state !== 'closed'));
     return sc;
   });
 

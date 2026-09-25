@@ -4,6 +4,7 @@ import { Ambient } from '../lib/motion.js';
 import { createShelves } from '../scenes/shelves.js';
 import { MONTHS, MONTHS_SHORT, stallPick, inSeason, seasonLabel } from '../data/season.js';
 import { parisNow } from '../features/hours.js';
+import { play as sfx } from '../lib/sound.js';
 
 export default function stalls(el) {
   const $ = (s) => el.querySelector(s);
@@ -27,7 +28,10 @@ export default function stalls(el) {
     b.setAttribute('aria-selected', String(i + 1 === month));
     b.setAttribute('aria-label', MONTHS[i] + (i + 1 === nowMonth ? ' (ce mois-ci)' : ''));
     b.textContent = label;
-    b.addEventListener('click', () => setMonth(i + 1));
+    b.addEventListener('click', () => {
+      sfx('note', { i });
+      setMonth(i + 1);
+    });
     monthsBar.append(b);
     return b;
   });
@@ -62,7 +66,10 @@ export default function stalls(el) {
     buttons[m - 1].scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
     describe(m);
     showCard(null);
-    if (scene) await scene.setItems(stallPick(m));
+    if (scene) {
+      sfx('tumble', { delay: 520 });
+      await scene.setItems(stallPick(m));
+    }
   }
 
   describe(month);
@@ -70,15 +77,20 @@ export default function stalls(el) {
   const ready = createShelves({ items: stallPick(month) }).then((sc) => {
     scene = sc;
     host.append(sc.svg);
-    sc.onPick((item) => showCard(item));
+    sc.onPick((item, i) => {
+      sfx(item ? 'crate' : 'unpop', { i });
+      showCard(item);
+    });
     sc.idle(ambient);
     host.addEventListener('click', () => {
+      if (!card.hidden) sfx('unpop');
       sc.select(-1);
       showCard(null);
     });
     return sc;
   });
   card.addEventListener('click', () => {
+    sfx('unpop');
     scene?.select(-1);
     showCard(null);
   });

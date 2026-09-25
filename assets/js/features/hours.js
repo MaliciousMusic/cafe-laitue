@@ -54,10 +54,10 @@ export function openStatus(date = new Date()) {
     if (now.minutes >= om && now.minutes < cm) {
       const left = cm - now.minutes;
       return left <= 30
-        ? { state: 'soon', label: `Ferme bientôt · ${fmt(c)}`, short: `Jusqu’à ${fmt(c)}` }
-        : { state: 'open', label: `Ouvert · jusqu’à ${fmt(c)}`, short: 'Ouvert' };
+        ? { state: 'soon', label: `Ferme bientôt · ${fmt(c)}`, short: `Jusqu’à ${fmt(c)}`, sub: `ferme à ${fmt(c)}` }
+        : { state: 'open', label: `Ouvert · jusqu’à ${fmt(c)}`, short: 'Ouvert', sub: `jusqu’à ${fmt(c)}` };
     }
-    if (now.minutes < om) return { state: 'closed', label: `Fermé · ouvre à ${fmt(o)}`, short: `Ouvre à ${fmt(o)}` };
+    if (now.minutes < om) return { state: 'closed', label: `Fermé · ouvre à ${fmt(o)}`, short: `Ouvre à ${fmt(o)}`, sub: `ouvre à ${fmt(o)}` };
   }
   for (let i = 1; i <= 21; i++) {
     const d = (now.day + i) % 7;
@@ -70,10 +70,11 @@ export function openStatus(date = new Date()) {
         state: 'closed',
         label: closure ? `${closure.label} · réouverture ${when} ${fmt(next[0][0])}` : `Fermé · ouvre ${when} à ${fmt(next[0][0])}`,
         short: 'Fermé',
+        sub: `${closure ? 'réouvre' : 'ouvre'} ${when} ${fmt(next[0][0])}`,
       };
     }
   }
-  return { state: 'closed', label: 'Fermé', short: 'Fermé' };
+  return { state: 'closed', label: 'Fermé', short: 'Fermé', sub: 'à bientôt' };
 }
 
 /** Horaires du jour en clair. */

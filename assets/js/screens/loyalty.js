@@ -1,7 +1,8 @@
 // Carte de fidélité : tampons enregistrés sur l'appareil, validés par le code du primeur.
 
 import { LOYALTY } from '../config.js';
-import { anim, EASE, isReduced, thump, vibrate, wait } from '../lib/motion.js';
+import { anim, EASE, isReduced, vibrate, wait } from '../lib/motion.js';
+import { play as sfx } from '../lib/sound.js';
 import { createStamp } from '../scenes/stamp.js';
 import { s, svgRoot } from '../lib/svg.js';
 
@@ -172,6 +173,7 @@ export default function loyalty(el) {
       hint.textContent = 'Trop d’essais. Réessayez dans une minute.';
       hint.classList.add('is-error');
     }
+    sfx('open');
     import('../main.js').then((m2) => m2.openSheet(sheet));
   }
 
@@ -188,6 +190,7 @@ export default function loyalty(el) {
       store.set(LOCK, { fails: fails >= 5 ? 0 : fails, until: fails >= 5 ? Date.now() + 60000 : 0 });
       hint.textContent = fails >= 5 ? 'Trop d’essais. Réessayez dans une minute.' : 'Code incorrect';
       hint.classList.add('is-error');
+      sfx('nope');
       const dotsBox = sheet.querySelector('.pin-dots');
       dotsBox.classList.remove('is-shake');
       void dotsBox.offsetWidth;
@@ -198,6 +201,7 @@ export default function loyalty(el) {
       return;
     }
     store.set(LOCK, { fails: 0, until: 0 });
+    sfx('yes');
     unlocked = true;
     keypad.hidden = true;
     sheet.querySelector('.pin-dots').hidden = true;
@@ -217,6 +221,7 @@ export default function loyalty(el) {
 
   function press(k) {
     if (unlocked) return;
+    sfx(k === 'del' ? 'erase' : 'key');
     if (k === 'del') code = code.slice(0, -1);
     else if (/^\d$/.test(k) && code.length < 4) code += k;
     setDots();
@@ -232,10 +237,12 @@ export default function loyalty(el) {
     else if (e.key === 'Backspace') press('del');
   });
   sheet.querySelector('#qty-minus').addEventListener('click', () => {
+    sfx('down');
     qty = Math.max(1, qty - 1);
     qtyOut.textContent = String(qty);
   });
   sheet.querySelector('#qty-plus').addEventListener('click', () => {
+    sfx('up');
     qty = Math.min(LOYALTY.maxPerVisit, qty + 1);
     qtyOut.textContent = String(qty);
   });
@@ -262,6 +269,7 @@ export default function loyalty(el) {
     const st = await createStamp({ ink: false });
     fly.append(st.svg);
     document.body.append(fly);
+    sfx('fly');
     if (!isReduced()) {
       await anim(fly, [
         { transform: 'translateY(-160px) rotate(-18deg) scale(1.3)', opacity: 0 },
@@ -269,7 +277,7 @@ export default function loyalty(el) {
         { transform: 'translateY(0) rotate(0) scale(.9)', opacity: 1 },
       ], { duration: 420, easing: EASE.in, fill: 'forwards' })?.finished.catch(() => {});
     }
-    thump();
+    sfx('stamp');
     vibrate(25);
     anim(card, [{ transform: 'translateY(0)' }, { transform: 'translateY(3px)' }, { transform: 'translateY(0)' }], { duration: 180, fill: 'none' });
     const up = anim(fly, [
@@ -318,6 +326,7 @@ export default function loyalty(el) {
   }
 
   function celebrate(title) {
+    sfx('chime');
     const layer = document.createElement('div');
     layer.className = 'confetti';
     layer.setAttribute('aria-hidden', 'true');
