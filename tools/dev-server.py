@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Serveur local de développement (sans cache) : python tools/dev-server.py [port]"""
+"""Serveur local de développement (sans cache) : python tools/dev-server.py [port]
+
+Port : argument, sinon variable d'environnement PORT, sinon 5173."""
+import os
 import sys
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -25,7 +28,7 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 5173
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("PORT", 5173))
     handler = partial(NoCacheHandler, directory=str(ROOT))
     print(f"Cafe Laitue - http://localhost:{port}", flush=True)
     ThreadingHTTPServer(("127.0.0.1", port), handler).serve_forever()

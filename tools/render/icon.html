@@ -2,20 +2,24 @@
 <html lang="fr"><head><meta charset="utf-8">
 <link rel="stylesheet" href="../../assets/css/fonts.css">
 <style>
-  html,body{margin:0;width:100vw;height:100vh;overflow:hidden}
-  body{display:grid;place-items:center;background:var(--bg)}
-  #m{width:var(--s);height:var(--s)}
+  html,body{margin:0;width:100vw;height:100vh;overflow:hidden;background:transparent}
+  body{display:grid;place-items:center}
+  #tile{position:fixed;inset:0;background:#12432B;border-radius:var(--r)}
+  #m{position:relative;width:var(--s);height:var(--s)}
   #m svg{width:100%;height:100%;overflow:visible}
 </style></head><body>
+<div id="tile"></div>
 <div id="m"></div>
 <script type="module">
-  // ?v=any|maskable|apple  — rend l'icône à la taille de la fenêtre
+  // ?v=any|maskable|apple : fond vert plein, logo et textes crème, sans pastille ni anneau.
+  // any = carré arrondi (bureau, anciens Android) ; maskable = plein cadre, tout dans la zone
+  // sûre (cercle de 80 %) ; apple = plein cadre (iOS arrondit lui-même les coins).
   import { createStamp } from '../../assets/js/scenes/stamp.js';
   const v = new URLSearchParams(location.search).get('v') || 'any';
   const root = document.documentElement.style;
-  root.setProperty('--bg', v === 'any' ? 'transparent' : '#12432B');
-  root.setProperty('--s', v === 'maskable' ? '78vmin' : v === 'apple' ? '90vmin' : '100vmin');
-  const st = await createStamp();
+  root.setProperty('--r', v === 'any' ? '22.5%' : '0');
+  root.setProperty('--s', v === 'maskable' ? '86vmin' : v === 'apple' ? '94vmin' : '92vmin');
+  const st = await createStamp({ disc: false, ring: false, colors: { forest: '#FDFBEB', sage: '#FDFBEB', cream: '#12432B' } });
   document.getElementById('m').append(st.svg);
   document.title = 'ready';
 </script></body></html>
