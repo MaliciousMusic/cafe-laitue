@@ -1,7 +1,8 @@
 // Service worker Café Laitue : l'appli (et la carte fidélité) fonctionne hors connexion.
-// Pensez à incrémenter VERSION à chaque mise en ligne.
+// Pensez à incrémenter VERSION à chaque mise en ligne. Si les icônes changent, changer aussi
+// leur ?v= (index.html, manifest, pages annexes, ci-dessous) : iOS et ce cache les gardent sinon.
 
-const VERSION = 'cl-2026-09-28-1';
+const VERSION = 'cl-2026-09-28-2';
 
 const CORE = [
   './',
@@ -38,9 +39,9 @@ const CORE = [
   'assets/js/screens/stalls.js',
   'assets/js/screens/owner.js',
   'assets/js/screens/loyalty.js',
-  'assets/icons/favicon.svg',
-  'assets/icons/icon-192.png',
-  'assets/icons/apple-touch-icon.png',
+  'assets/icons/favicon.svg?v=2',
+  'assets/icons/icon-192.png?v=2',
+  'assets/icons/apple-touch-icon.png?v=2',
   'assets/img/primeur-portrait-540.webp',
 ];
 
