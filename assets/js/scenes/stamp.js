@@ -87,11 +87,13 @@ function netLines() {
  * @param {boolean} [o.disc=true]  pastille crème derrière
  * @param {boolean} [o.ink=false]  version « encre » monochrome (carte fidélité)
  * @param {boolean} [o.text=true]  affiche les textes en arc
+ * @param {boolean} [o.ring=true]  anneau sauge autour
+ * @param {object} [o.colors]      couleurs { forest, sage, cream } (ex. version crème sur vert de l'icône d'appli)
  * @returns {Promise<{svg:SVGSVGElement, play:Function, idle:Function, press:Function}>}
  */
-export async function createStamp({ disc = true, ink = false, text = true, className = '' } = {}) {
+export async function createStamp({ disc = true, ring = true, ink = false, text = true, colors = null, className = '' } = {}) {
   if (text) await brandFontsReady();
-  const col = ink ? { forest: 'currentColor', sage: 'currentColor', cream: 'none' } : BRAND;
+  const col = colors || (ink ? { forest: 'currentColor', sage: 'currentColor', cream: 'none' } : BRAND);
   const svg = svgRoot('0 0 400 400', { class: `stamp ${ink ? 'stamp--ink' : ''} ${className}`.trim() });
   const root = g({ class: 'st-root' });
   svg.append(root);
@@ -101,14 +103,16 @@ export async function createStamp({ disc = true, ink = false, text = true, class
     parts.disc = s('circle', { cx: 200, cy: 200, r: 198, fill: col.cream, class: 'st-disc' });
     root.append(parts.disc);
   }
-  parts.ring = s('path', {
-    d: wobblyCircle(200, 200, 180, { amp: 1.1, seed: 7 }),
-    fill: 'none',
-    stroke: col.sage,
-    'stroke-width': ink ? 7 : 5,
-    class: 'st-ring',
-  });
-  root.append(parts.ring);
+  if (ring) {
+    parts.ring = s('path', {
+      d: wobblyCircle(200, 200, 180, { amp: 1.1, seed: 7 }),
+      fill: 'none',
+      stroke: col.sage,
+      'stroke-width': ink ? 7 : 5,
+      class: 'st-ring',
+    });
+    root.append(parts.ring);
+  }
 
   // --- Textes en arc ---
   if (text) {
@@ -185,7 +189,7 @@ export async function createStamp({ disc = true, ink = false, text = true, class
           duration: 520 * k, delay, easing: EASE.back,
         }));
       }
-      list.push(drawIn(parts.ring, { duration: 1000 * k, delay: delay + 120 * k }));
+      if (parts.ring) list.push(drawIn(parts.ring, { duration: 1000 * k, delay: delay + 120 * k }));
       // Les lettres se posent en cascade (petits crans), puis « tchac »
       sfx('ratchet', { n: parts.letters.length, gap: 0.042 * k, delay: delay + 644 * k });
       parts.letters.forEach((L, i) => {

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Génère assets/icons/favicon.svg (version simplifiée du tampon, sans texte, lisible en 16 px).
+// Génère assets/icons/favicon.svg : l'icône d'appli simplifiée (carré vert, laitue et tasse crème,
+// sans texte), lisible en 16 px.
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -31,8 +32,8 @@ const lines = [];
 });
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="40 40 320 320">
-<circle cx="200" cy="200" r="158" fill="#12432B"/>
-<path d="${lettuce}" fill="none" stroke="#B9CDB5" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="40" y="40" width="320" height="320" rx="72" fill="#12432B"/>
+<path d="${lettuce}" fill="none" stroke="#FDFBEB" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
 <g transform="translate(197 239) rotate(-19) scale(1.1)">
 <clipPath id="c"><path d="${body}"/></clipPath>
 <path d="${body}" fill="#12432B"/>

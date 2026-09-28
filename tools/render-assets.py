@@ -68,9 +68,12 @@ def main():
         shot(browser, f"{base}/icon.html?v=maskable", 1024, 1024, tmp / "maskable.png")
         shot(browser, f"{base}/icon.html?v=apple", 1024, 1024, tmp / "apple.png")
         shot(browser, f"{base}/og.html", 1200, 630, tmp / "og.png")
+        shot(browser, f"http://127.0.0.1:{port}/assets/icons/favicon.svg", 512, 512, tmp / "fav.png")
         any_ = Image.open(tmp / "any.png").convert("RGBA")
-        for size in (512, 192, 32):
-            any_.resize((size, size), Image.LANCZOS).save(ICONS / f"icon-{size}.png" if size != 32 else ICONS / "favicon-32.png")
+        for size in (512, 192):
+            any_.resize((size, size), Image.LANCZOS).save(ICONS / f"icon-{size}.png")
+        # Le favicon PNG vient du SVG simplifié (sans texte) : lisible en 32 px
+        Image.open(tmp / "fav.png").convert("RGBA").resize((32, 32), Image.LANCZOS).save(ICONS / "favicon-32.png")
         Image.open(tmp / "maskable.png").convert("RGB").resize((512, 512), Image.LANCZOS).save(ICONS / "icon-maskable-512.png")
         Image.open(tmp / "apple.png").convert("RGB").resize((180, 180), Image.LANCZOS).save(ICONS / "apple-touch-icon.png")
         Image.open(tmp / "og.png").convert("RGB").save(IMG / "og-cafe-laitue.jpg", quality=86, optimize=True, progressive=True)
