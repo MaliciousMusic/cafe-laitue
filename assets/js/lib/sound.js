@@ -239,6 +239,36 @@ export const SOUNDS = {
     lfo.stop(end);
     strike(c, o, t + dur + 0.04, 300, 'wood', { d: 0.09, v: 0.09 });
   },
+  /** L'extracteur de jus : le moteur ronronne et monte en régime. */
+  juicer(c, o, t, { dur = 0.6 }) {
+    const src = c.createBufferSource();
+    src.buffer = noiseBuffer(c);
+    src.loop = true;
+    const bp = c.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 700;
+    bp.Q.value = 1.1;
+    const am = c.createGain();
+    am.gain.value = 0.5;
+    const lfo = c.createOscillator();
+    lfo.frequency.value = 31;
+    const depth = c.createGain();
+    depth.gain.value = 0.5;
+    lfo.connect(depth).connect(am.gain);
+    src.connect(bp).connect(am).connect(env(c, t, 0.06, 0.12, 0.2, dur)).connect(o);
+    const end = tail(t, 0.06, 0.12, dur);
+    src.start(t, Math.random());
+    lfo.start(t);
+    src.stop(end);
+    lfo.stop(end);
+    const whine = c.createOscillator();
+    whine.type = 'triangle';
+    whine.frequency.setValueAtTime(380, t);
+    whine.frequency.exponentialRampToValueAtTime(520, t + dur * 0.6);
+    whine.connect(env(c, t, 0.08, 0.12, 0.03, dur)).connect(o);
+    whine.start(t);
+    whine.stop(end);
+  },
   /** Le primeur surgit devant sa porte. */
   hop(c, o, t) {
     tone(c, o, t, { f: 360, f2: 860, glide: 0.13, a: 0.01, d: 0.14, v: 0.07 });

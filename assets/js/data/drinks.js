@@ -1,9 +1,31 @@
-// La carte du comptoir (prix : tableau mural de la boutique). Source des vues éclatées.
+// La carte du café (prix : tableau mural de la boutique). Source des vues éclatées et du
+// procédé : chaque boisson liste ses étapes, que la scène joue dans le même ordre.
 
-export const CATEGORIES = {
-  cafes: ['expresso', 'cappuccino', 'v60', 'latte', 'flatwhite', 'matcha', 'chai'],
-  jus: ['ace', 'detox', 'p2', 'ginger', 'surmesure'],
+export const ORDER = ['expresso', 'cappuccino', 'v60', 'latte', 'flatwhite', 'matcha', 'chai'];
+
+/** Étapes du procédé (libellés communs) ; `k` = ce que la scène anime. */
+export const STEPS = {
+  grind: 'Mouture',
+  tamp: 'Tassage',
+  extract: 'Extraction',
+  milk: 'Lait',
+  art: 'Latte art',
+  ice: 'Glaçons',
+  matcha: 'Matcha',
+  infuse: 'Infusion',
+  rinse: 'Rinçage',
+  bloom: 'Bloom',
+  pour: 'Versements',
 };
+
+const ICED_MILK = { k: 'milk', sub: 'lait froid, bien frais' };
+const ICE = { k: 'ice', sub: 'beaucoup de glaçons' };
+const V60 = [
+  { k: 'rinse', sub: 'filtre rincé à l’eau chaude' },
+  { k: 'grind', sub: 'mouture moyenne, à la minute' },
+  { k: 'bloom', sub: 'le café gonfle et dégaze' },
+  { k: 'pour', sub: 'versements lents, en spirale' },
+];
 
 export const DRINKS = {
   expresso: {
@@ -14,6 +36,11 @@ export const DRINKS = {
     layers: [
       { k: 'espresso', h: 22, label: 'Expresso', sub: 'grains Kaduck, torréfiés à Clermont' },
       { k: 'crema', h: 6, label: 'Crème', sub: 'noisette, fine et dense' },
+    ],
+    process: [
+      { k: 'grind', sub: 'grains Kaduck moulus à la minute' },
+      { k: 'tamp', sub: 'une galette bien régulière' },
+      { k: 'extract', sub: 'court et intense, sous une crème noisette' },
     ],
   },
   cappuccino: {
@@ -28,6 +55,12 @@ export const DRINKS = {
     ],
     garnish: { k: 'art', label: 'Latte art', sub: 'versé à la main' },
     surface: 'coffee',
+    process: [
+      { k: 'grind', sub: 'moulu à la minute' },
+      { k: 'extract', sub: 'un expresso, la base' },
+      { k: 'milk', sub: 'chauffé à la vapeur, mousse épaisse' },
+      { k: 'art', sub: 'versé à la main, motif surprise' },
+    ],
   },
   v60: {
     name: 'V60',
@@ -35,6 +68,8 @@ export const DRINKS = {
     special: 'v60',
     hot: true,
     iced: true,
+    process: V60,
+    icedProcess: [{ k: 'ice', sub: 'le café coule directement sur la glace' }, ...V60],
   },
   latte: {
     name: 'Latte',
@@ -48,6 +83,12 @@ export const DRINKS = {
     ],
     garnish: { k: 'art', label: 'Latte art', sub: 'versé à la main' },
     surface: 'coffee',
+    process: [
+      { k: 'grind', sub: 'moulu à la minute' },
+      { k: 'extract', sub: 'un expresso, la base' },
+      { k: 'milk', sub: 'lait velouté, fine micro-mousse' },
+      { k: 'art', sub: 'versé à la main, motif surprise' },
+    ],
     icedVersion: {
       vessel: 'tall',
       layers: [
@@ -56,6 +97,7 @@ export const DRINKS = {
       ],
       ice: { label: 'Glaçons', sub: 'beaucoup !' },
       garnish: { k: 'straw', label: 'Paille', sub: 'en papier' },
+      process: [ICE, ICED_MILK, { k: 'grind', sub: 'moulu à la minute' }, { k: 'extract', sub: 'l’expresso coule sur la glace' }],
     },
   },
   flatwhite: {
@@ -70,6 +112,12 @@ export const DRINKS = {
     ],
     garnish: { k: 'art', label: 'Latte art', sub: 'versé à la main' },
     surface: 'coffee',
+    process: [
+      { k: 'grind', sub: 'moulu à la minute' },
+      { k: 'extract', sub: 'un double ristretto' },
+      { k: 'milk', sub: 'micro-moussé, texture soyeuse' },
+      { k: 'art', sub: 'versé à la main, motif surprise' },
+    ],
   },
   matcha: {
     name: 'Matcha latte',
@@ -83,6 +131,11 @@ export const DRINKS = {
     ],
     garnish: { k: 'art', label: 'Latte art', sub: 'lait sur matcha' },
     surface: 'matcha',
+    process: [
+      { k: 'matcha', sub: 'thé vert fouetté à l’eau chaude' },
+      { k: 'milk', sub: 'chauffé à la vapeur' },
+      { k: 'art', sub: 'versé à la main, motif surprise' },
+    ],
     icedVersion: {
       vessel: 'tall',
       layers: [
@@ -91,6 +144,7 @@ export const DRINKS = {
       ],
       ice: { label: 'Glaçons', sub: 'beaucoup !' },
       garnish: { k: 'straw', label: 'Paille', sub: 'en papier' },
+      process: [ICE, ICED_MILK, { k: 'matcha', sub: 'fouetté, versé sur la glace' }],
     },
   },
   chai: {
@@ -105,6 +159,11 @@ export const DRINKS = {
     ],
     garnish: { k: 'art', cinnamon: true, label: 'Latte art & cannelle', sub: 'une pincée' },
     surface: 'chai',
+    process: [
+      { k: 'infuse', sub: 'thé noir & épices douces' },
+      { k: 'milk', sub: 'chauffé à la vapeur' },
+      { k: 'art', sub: 'versé à la main, une pincée de cannelle' },
+    ],
     icedVersion: {
       vessel: 'tall',
       layers: [
@@ -113,77 +172,16 @@ export const DRINKS = {
       ],
       ice: { label: 'Glaçons', sub: 'beaucoup !' },
       garnish: { k: 'straw', label: 'Paille', sub: 'en papier' },
+      process: [ICE, ICED_MILK, { k: 'infuse', sub: 'infusé, versé sur la glace' }],
     },
   },
-  ace: {
-    name: 'A.C.E.',
-    price: '4 €',
-    juice: true,
-    vessel: 'juice',
-    fruits: [
-      { id: 'orange', label: 'Orange', sub: 'pressée minute' },
-      { id: 'carotte', label: 'Carotte', sub: 'douce et sucrée' },
-      { id: 'citron', label: 'Citron', sub: 'un trait de peps' },
-    ],
-    garnish: { k: 'wheel', color: '#F39A2D', label: 'Rondelle d’orange', sub: 'sur le verre' },
-  },
-  detox: {
-    name: 'Détox',
-    price: '4 €',
-    juice: true,
-    vessel: 'juice',
-    fruits: [
-      { id: 'pomme', label: 'Pomme', sub: 'croquante' },
-      { id: 'carotte', label: 'Carotte', sub: 'douce et sucrée' },
-      { id: 'citron', label: 'Citron', sub: 'un trait de peps' },
-      { id: 'gingembre', label: 'Gingembre', sub: 'frais, ça pique un peu' },
-    ],
-    garnish: { k: 'wheel', color: '#F4D23C', label: 'Citron', sub: 'sur le verre' },
-  },
-  p2: {
-    name: 'P²',
-    price: '4 €',
-    juice: true,
-    vessel: 'juice',
-    fruits: [
-      { id: 'pomme', label: 'Pomme', sub: 'croquante' },
-      { id: 'poire', label: 'Poire', sub: 'fondante' },
-    ],
-    garnish: { k: 'wheel', color: '#E8D27A', label: 'Tranche de pomme', sub: 'sur le verre' },
-  },
-  ginger: {
-    name: 'Ginger shot',
-    price: 'shot',
-    juice: true,
-    vessel: 'shot',
-    fruits: [{ id: 'gingembre', label: 'Gingembre', sub: 'frais, pressé minute' }],
-  },
-  surmesure: {
-    name: 'Jus sur demande',
-    price: 'selon la saison',
-    juice: true,
-    vessel: 'juice',
-    seasonal: true,
-    fruits: [],
-    garnish: { k: 'wheel', color: '#F5A55C', label: 'Fruit du moment', sub: 'sur le verre' },
-  },
 };
 
-// Couleur du jus par fruit (moyennée pour les mélanges).
-export const JUICE_COLOR = {
-  orange: '#F4972E', carotte: '#F08A2A', pomme: '#E8D27A', poire: '#DCD46E', citron: '#F2DA5A',
-  gingembre: '#E6C765', raisin: '#8C3B6E', peche: '#F5A55C', abricot: '#F4A13C', fraise: '#E0485A',
-  melon: '#F3A35A', pasteque: '#EC6072', framboise: '#D8436A', prune: '#9A4A7A', kiwi: '#9BC24A',
-  clementine: '#F59A30', figue: '#A8607A', myrtille: '#5A4E8E', cerise: '#B02A3E', coing: '#E3CB6A',
-  rhubarbe: '#E07A8A', concombre: '#B9D58C', betterave: '#9C2748',
-};
-
-// Ingrédients du jus « sur demande » : toujours là + selon la saison (voir data/season.js).
-export const JUICE_BASE = ['pomme', 'poire', 'orange', 'carotte', 'citron', 'gingembre'];
-export const JUICE_SEASONAL = ['raisin', 'peche', 'abricot', 'fraise', 'framboise', 'melon', 'pasteque', 'kiwi', 'clementine', 'prune', 'myrtille', 'concombre', 'betterave'];
-export const JUICE_LABEL = {
-  pomme: 'Pomme', poire: 'Poire', orange: 'Orange', carotte: 'Carotte', citron: 'Citron', gingembre: 'Gingembre',
-  raisin: 'Raisin', peche: 'Pêche', abricot: 'Abricot', fraise: 'Fraise', framboise: 'Framboise', melon: 'Melon',
-  pasteque: 'Pastèque', kiwi: 'Kiwi', clementine: 'Clémentine', prune: 'Prune', myrtille: 'Myrtille',
-  concombre: 'Concombre', betterave: 'Betterave',
-};
+/** Étapes d'une boisson, chaude ou glacée. */
+export function processOf(id, iced = false) {
+  const def = DRINKS[id];
+  if (!def) return [];
+  if (iced && def.icedVersion?.process) return def.icedVersion.process;
+  if (iced && def.icedProcess) return def.icedProcess;
+  return def.process || [];
+}

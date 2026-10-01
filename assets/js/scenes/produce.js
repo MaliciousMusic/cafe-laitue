@@ -341,6 +341,130 @@ const ART = {
     line('M-8 0 h3 M1 -2 h3 M5 3 h3', '#B38B52', 1),
     ell(-5, -3, 2.2, 1.2, '#E8CFA0', { opacity: 0.9 }),
   ]),
+  // --- Bar à jus : agrumes, fruits exotiques, verts, aromates, épices
+  citronvert: () => g({}, [
+    ell(0, 0, 9.5, 8, '#7DB23A'),
+    path('M-9.5 0 L-11.5 -.5 L-11.5 .5 Z M9.5 0 L11.5 -.5 L11.5 .5 Z', '#5E9A2A'),
+    ...[[-4, -2], [3, -4], [5, 2], [-2, 4], [1, 0]].map(([x, y]) => circle(0.5, '#6A9E2E', { transform: `translate(${x} ${y})` })),
+    shine(-3.5, -3, 2.6, 1.5),
+    leafShape(2, -7.5, -35, 7, C.leafDark),
+  ]),
+  pamplemousse: () => {
+    const G = g({}, [circle(11, '#F2B65A'), circle(9.6, '#FBE7C9'), circle(8.6, '#F07B6E')]);
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      G.append(line(`M0 0L${(Math.cos(a) * 8.6).toFixed(2)} ${(Math.sin(a) * 8.6).toFixed(2)}`, '#FBE7C9', 1.1));
+    }
+    G.append(circle(1.6, '#FBE7C9'), ell(-3.5, -4, 1.4, 0.8, '#fff', { opacity: 0.5 }));
+    return G;
+  },
+  ananas: () => g({}, [
+    path('M0 -8 L-5 -19 L-1.5 -11 L0 -21 L1.5 -11 L5 -19 Z', '#4E8A3B'),
+    path('M0 -8 L-8 -15 L-2 -9 Z M0 -8 L8 -15 L2 -9 Z', '#3E7A36'),
+    ell(0, 3, 8, 11, '#E8B23A'),
+    line('M-6 -4 L4 10 M-8 2 L1 13 M-3 -7 L7 6 M6 -4 L-4 10 M8 2 L-1 13 M3 -7 L-7 6', '#C68A24', 1),
+    shine(-3.5, -1, 1.8, 3),
+  ]),
+  mangue: () => g({}, [
+    path('M-10 3 C-11 -5 -3 -11 4 -9 C10 -7 12 0 9 6 C6 11 -6 11 -10 3 Z', '#F2B33B'),
+    path('M-10 3 C-11 -5 -3 -11 4 -9 C0 -6 -4 -2 -6 4 C-7 7 -8 6 -10 3 Z', '#E4602F', { opacity: 0.55 }),
+    shine(2, -4, 3, 1.8),
+    line('M4 -9 Q6 -12 8 -12', C.stem, 1.3),
+    leafShape(7.5, -12, -20, 7),
+  ]),
+  grenade: () => g({}, [
+    circle(9.5, '#C22F4A'),
+    path('M-3 -9 L-3.5 -12.5 L-1.5 -11 L0 -13.5 L1.5 -11 L3.5 -12.5 L3 -9 Z', '#9E2238'),
+    ell(3, 3, 5, 4.5, '#A31F37', { opacity: 0.4 }),
+    shine(-4, -3, 2.6, 1.8),
+  ]),
+  passion: () => {
+    const G = g({}, [circle(9.5, '#5E2F5C'), circle(8, '#F6E7B8'), circle(7, '#F2C13A')]);
+    [[-3, -2], [1, -4], [4, -1], [-1, 1], [2, 3], [-4, 2.5], [0, 5], [4, 3.5], [-2, -5]].forEach(([x, y]) => G.append(ell(x, y, 0.9, 1.3, '#2A1E17')));
+    G.append(ell(-4, -5.5, 1.6, 0.9, '#fff', { opacity: 0.35 }));
+    return G;
+  },
+  kale: () => g({}, [
+    path('M0 13 C-2 6 -9 4 -10 -2 C-11 -7 -7 -9 -6 -12 C-3 -10 -1 -14 2 -12 C4 -14 7 -11 7 -8 C10 -7 11 -3 9 0 C8 4 2 6 0 13 Z', '#3E7A40'),
+    path('M-9 -2 C-8 -6 -5 -7 -4 -10 M8 -1 C9 -4 7 -7 5 -9', 'none', { stroke: '#2F6436', 'stroke-width': 1.1, 'stroke-linecap': 'round' }),
+    line('M0 13 C0 4 1 -4 2 -11', '#9CCB82', 1.3),
+    line('M0.6 4 L-5 -1 M1 0 L5 -4 M1.4 -5 L-3 -8', '#9CCB82', 0.9),
+  ]),
+  celeribr: () => g({}, [
+    path('M-6 14 L-4 -6 L-1 -6 L-2 14 Z', '#B9D58C'),
+    path('M-1 14 L0 -8 L3 -8 L3 14 Z', '#A0C06E'),
+    path('M3 14 L4 -5 L7 -5 L6.5 14 Z', '#B9D58C'),
+    line('M-3.5 -6 L-6 -12 M1.5 -8 L1 -15 M5.5 -5 L8 -11', '#5E9A3A', 1.4),
+    leafShape(-6, -12, -125, 6, C.leafLight),
+    leafShape(1, -15, -90, 6, C.leaf),
+    leafShape(8, -11, -45, 6, C.leafLight),
+  ]),
+  menthe: () => g({}, [
+    line('M0 13 C0 4 -1 -4 0 -11', '#4E7F3A', 1.3),
+    ...[[7, 1], [1, 0.9], [-5, 0.75]].flatMap(([y, k]) => [
+      leafShape(0, y, 205, 9 * k, '#5DB35A'),
+      leafShape(0, y - 1, -25, 9 * k, '#4FA34E'),
+    ]),
+    leafShape(0, -11, -90, 6.5, '#6CC266'),
+  ]),
+  basilic: () => g({}, [
+    line('M0 13 L0 1', '#4E7F3A', 1.4),
+    ell(-5, 0, 4.8, 7.4, '#3F8F3E', { transform: 'rotate(-32 -5 0)' }),
+    ell(5, 0, 4.8, 7.4, '#4FA34A', { transform: 'rotate(32 5 0)' }),
+    ell(0, -5, 4.4, 7, '#5BAE52'),
+    line('M0 1 L0 -11', '#A5D38E', 0.9),
+  ]),
+  persil: () => {
+    const leaflet = (x, y, a, fill) => path('M0 0 L-3 -2 L-4.6 -5 L-3 -5.4 L-3.6 -8.2 L-1 -6.6 L0 -9.8 L1 -6.6 L3.6 -8.2 L3 -5.4 L4.6 -5 L3 -2 Z', fill, { transform: `translate(${x} ${y}) rotate(${a}) scale(1.25)`, 'stroke-linejoin': 'round' });
+    return g({}, [
+      line('M0 13 L0 0 M0 5 L-6 -2 M0 3 L6 -3', '#5E9A3A', 1.2),
+      leaflet(0, 0, 0, '#3E8A3B'),
+      leaflet(-6, -2, -38, '#4E9A44'),
+      leaflet(6, -3, 38, '#3E8A3B'),
+    ]);
+  },
+  coriandre: () => {
+    const leaflet = (x, y, a, fill) => path('M0 0 C-4 -1 -5 -5 -3 -7 C-1 -9 1 -9 3 -7 C5 -5 4 -1 0 0 Z', fill, { transform: `translate(${x} ${y}) rotate(${a}) scale(1.2)` });
+    return g({}, [
+      line('M0 13 L0 0 M0 5 L-6 -1 M0 3 L6 -2', '#6F9F4A', 1.1),
+      leaflet(0, 0, 0, '#6DAE5A'),
+      leaflet(-6, -1, -40, '#7DBE6A'),
+      leaflet(6, -2, 40, '#6DAE5A'),
+    ]);
+  },
+  curcuma: () => g({}, [
+    path('M-12 3 C-12 -2 -7 -4 -4 -2 C-3 -6 2 -7 4 -4 C8 -5 12 -2 11 2 C11 6 6 7 3 5 C0 8 -5 7 -7 5 C-10 6 -12 5 -12 3 Z', '#B9772E'),
+    circle(3.6, '#F2A11B', { transform: 'translate(7 1)' }),
+    circle(2.1, '#F7C04A', { transform: 'translate(7 1)' }),
+    line('M-8 1 h3 M-2 -1 h3', '#8E5A22', 0.9),
+  ]),
+  cannelle: () => g({ transform: 'rotate(-25)' }, [
+    s('rect', { x: -12, y: -6, width: 24, height: 5, rx: 2.5, fill: '#9A5A2C' }),
+    ell(12, -3.5, 1.6, 2.5, '#6E3E1C'),
+    s('rect', { x: -12, y: 1, width: 24, height: 5, rx: 2.5, fill: '#8A4B22' }),
+    ell(12, 3.5, 1.6, 2.5, '#5E3418'),
+    line('M-9 -4 H7 M-9 3 H7', '#B87A44', 0.8, { opacity: 0.7 }),
+  ]),
+  piment: () => g({}, [
+    path('M-9 -6 C-4 -4 4 0 9 8 C10 10 8 11 6 9 C1 4 -5 0 -10 -2 Z', '#D2362A'),
+    path('M-9 -6 C-4 -4 0 -2 3 0 C-2 -1 -6 -2 -10 -2 Z', '#E8574A', { opacity: 0.7 }),
+    line('M-10 -2 C-12 -3 -12 -6 -9 -6 M-10.5 -4 L-11 -9', '#3E7A36', 2),
+  ]),
+  coco: () => g({}, [
+    circle(10.5, '#6B4A2E'),
+    circle(9, '#F7F4EA'),
+    circle(6.6, '#ECE5D2'),
+    line('M-9 -6 l-2 -1.4 M9 -6 l2 -1.4 M-10.4 2 l-2.2 .2 M10.4 2 l2.2 .2', '#8A6A44', 1),
+    ell(-3, -3.5, 2.4, 1.4, '#fff', { opacity: 0.6 }),
+  ]),
+  miel: () => g({}, [
+    path('M-7 -6 L7 -6 L8 9 C8 11 6 12 4 12 L-4 12 C-6 12 -8 11 -8 9 Z', '#F0B23C'),
+    s('rect', { x: -8.5, y: -10.5, width: 17, height: 5, rx: 1.4, fill: '#8A5A2A' }),
+    path('M-6 -1 L6 -1 L6 6 L-6 6 Z', '#FBF1D8', { opacity: 0.85 }),
+    line('M-3 2.5 h6', '#C98A2A', 1),
+    path('M3 -5.5 C3 -3 4 -2 4 -0.5 C4 1 2 1 2 -0.5 C2 -2 3 -3 3 -5.5 Z', '#E9A93A'),
+    ell(-5.2, 4, 0.9, 3, '#fff', { opacity: 0.4 }),
+  ]),
   pdt: () => g({}, [
     ell(0, 0, 9, 7, '#D9B97A'),
     ...[[-3, -2], [3, 1], [-1, 3]].map(([x, y]) => circle(0.7, '#A8874A', { transform: `translate(${x} ${y})` })),
@@ -358,7 +482,10 @@ const LAYOUT = {
   brocoli: ['round', 1.05], fenouil: ['round', 1], carotte: ['long', 1], betterave: ['round', 0.95], patate: ['round', 1],
   courge: ['big', 1], poireau: ['long', 1.1], celeri: ['round', 1.05], choufleur: ['leafy', 1], chou: ['leafy', 1],
   endive: ['long', 0.95], mache: ['round', 0.9], panais: ['long', 1], navet: ['round', 0.95], epinard: ['round', 1],
-  pdt: ['round', 0.9],
+  pdt: ['round', 0.9], citronvert: ['round', 0.95], pamplemousse: ['round', 1], ananas: ['big', 1], mangue: ['round', 1],
+  grenade: ['round', 1], passion: ['round', 0.9], kale: ['leafy', 1], celeribr: ['long', 1], menthe: ['round', 0.9],
+  basilic: ['round', 0.9], persil: ['round', 0.9], coriandre: ['round', 0.9], curcuma: ['round', 0.95], cannelle: ['round', 0.9],
+  piment: ['round', 0.9], coco: ['round', 1], miel: ['round', 1],
 };
 
 /** Un seul produit (pour une icône ou une animation). */

@@ -11,21 +11,24 @@ import { startSplash } from './features/splash.js';
 // Code à jour : pas besoin de recharger quand un nouveau service worker prend la main (voir index.html)
 window.__clFresh = true;
 
-const SCREENS = ['accueil', 'comptoir', 'etals', 'primeur', 'fidelite'];
+const SCREENS = ['accueil', 'cafe', 'etals', 'jus', 'fidelite'];
 const TITLES = {
   accueil: null,
-  comptoir: 'Le comptoir',
+  cafe: 'Le café',
   etals: 'Les étals',
-  primeur: 'Votre primeur',
+  jus: 'Le bar à jus',
   fidelite: 'Carte fidélité',
 };
 const LOADERS = {
   accueil: () => import('./screens/home.js'),
-  comptoir: () => import('./screens/bar.js'),
+  cafe: () => import('./screens/cafe.js'),
   etals: () => import('./screens/stalls.js'),
-  primeur: () => import('./screens/owner.js'),
+  jus: () => import('./screens/juicebar.js'),
   fidelite: () => import('./screens/loyalty.js'),
 };
+// Anciennes adresses (liens partagés, raccourcis installés)
+const ALIASES = { comptoir: 'cafe', primeur: 'jus' };
+const route = (id) => ALIASES[id] || id;
 
 const baseTitle = document.title;
 const controllers = {};
@@ -125,7 +128,7 @@ const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { tim
 document.addEventListener('click', (e) => {
   const a = e.target.closest('a[href^="#"]');
   if (!a) return;
-  const id = a.getAttribute('href').slice(1);
+  const id = route(a.getAttribute('href').slice(1));
   if (SCREENS.includes(id)) {
     e.preventDefault();
     sfx('tab', { i: SCREENS.indexOf(id) });
@@ -137,7 +140,7 @@ document.addEventListener('click', (e) => {
 });
 
 window.addEventListener('popstate', () => {
-  const id = location.hash.slice(1);
+  const id = route(location.hash.slice(1));
   if (id === 'infos') return openSheet($('#infos'));
   go(SCREENS.includes(id) ? id : 'accueil');
 });
@@ -314,7 +317,7 @@ backdrop();
 startSplash();
 
 // Bandeaux horizontaux : glisser à la souris, molette, points de pagination
-$$('.cards, .months, .values, .composer-list').forEach(dragScroll);
+$$('.cards, .months, .values, .baskets, .jb-groups').forEach(dragScroll);
 $$('.cards').forEach((el) => pager(el, { label: 'Carte' }));
 
 SCREENS.forEach((id) => {
@@ -324,7 +327,7 @@ SCREENS.forEach((id) => {
   el.setAttribute('inert', '');
   el.setAttribute('aria-hidden', 'true');
 });
-const startId = location.hash.slice(1);
+const startId = route(location.hash.slice(1));
 go(SCREENS.includes(startId) ? startId : 'accueil', { replace: true });
 if (startId === 'infos') openSheet($('#infos'));
 window.addEventListener('resize', () => placePill(false));
