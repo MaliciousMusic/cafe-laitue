@@ -126,10 +126,15 @@ export function initInstall({ openSheet, desk }) {
     if (a) a.finished.then(done).catch(done);
     else done();
   }
+  // l'écran affiché (sur l'écran Fidélité, le bouton d'installation est déjà là)
+  let screen = location.hash.slice(1) || 'accueil';
+  document.addEventListener('cl:screen', (e) => {
+    screen = e.detail;
+    if (screen === 'fidelite' && nudge && !nudge.hidden) nudge.hidden = true;
+  });
   function showNudge() {
     if (!nudge || env.standalone || desk.matches || recently()) return;
-    // sur l'écran Fidélité, le bouton d'installation est déjà là
-    if (location.hash === '#fidelite') return;
+    if (screen === 'fidelite') return;
     nudge.hidden = false;
     sfx('pop');
     anim(nudge, [{ transform: 'translateY(30px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }], { duration: 480, easing: EASE.back, fill: 'none' });
@@ -140,7 +145,6 @@ export function initInstall({ openSheet, desk }) {
       sfx('down');
       hideNudge();
     });
-    window.addEventListener('hashchange', () => location.hash === '#fidelite' && !nudge.hidden && (nudge.hidden = true));
     const later = () => setTimeout(showNudge, isReduced() ? 2500 : 7000);
     if (html.classList.contains('has-splash')) document.addEventListener('cl:splash-done', later, { once: true });
     else later();

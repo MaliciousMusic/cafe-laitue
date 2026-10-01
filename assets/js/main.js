@@ -113,6 +113,7 @@ async function go(id, { push = false, replace = false } = {}) {
   }
 
   document.title = TITLES[id] ? `${TITLES[id]} · Café Laitue` : baseTitle;
+  document.dispatchEvent(new CustomEvent('cl:screen', { detail: id }));
   const hash = `#${id}`;
   if (push && location.hash !== hash) history.pushState({ id }, '', hash);
   else if (replace) history.replaceState({ id }, '', id === 'accueil' && !location.hash ? location.pathname + location.search : hash);

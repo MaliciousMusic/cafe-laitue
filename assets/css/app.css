@@ -1549,6 +1549,7 @@ h3 {
   min-height: 0;
   margin-top: -16px;
   padding-bottom: 8px;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: none;
@@ -1777,7 +1778,7 @@ h3 {
 .jb-ing {
   position: relative;
   display: grid;
-  grid-template-columns: 38px 1fr;
+  grid-template-columns: 38px minmax(0, 1fr);
   grid-template-rows: auto auto;
   align-content: start;
   column-gap: 8px;
@@ -1801,9 +1802,13 @@ h3 {
   align-self: end;
   font-size: 14px;
   line-height: 1.15;
+  overflow-wrap: anywhere;
+  -webkit-hyphens: auto;
+  hyphens: auto;
 }
 .jb-tag {
   align-self: start;
+  overflow-wrap: anywhere;
   font-family: var(--font-hand);
   font-size: 12.5px;
   letter-spacing: 0.03em;
@@ -2387,6 +2392,7 @@ h3 {
   backdrop-filter: blur(3px);
 }
 .sheet-inner {
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 6px 20px calc(22px + var(--sab));
@@ -2638,8 +2644,29 @@ h3 {
   .actions {
     grid-template-columns: 1fr 1fr;
   }
-  .actions > :first-child {
+  .actions--3 > :first-child {
     grid-column: span 2;
+  }
+  .actions--2 .btn {
+    gap: 5px;
+    padding: 0 8px;
+    font-size: 13.5px;
+  }
+  .actions--2 .btn .i {
+    width: 17px;
+    height: 17px;
+  }
+  .jb-ing {
+    grid-template-columns: 32px minmax(0, 1fr);
+    column-gap: 7px;
+    padding: 9px 9px 10px;
+  }
+  .jb-ing svg {
+    width: 32px;
+    height: 32px;
+  }
+  .jb-ing b {
+    font-size: 13.5px;
   }
   .tab {
     font-size: 10px;

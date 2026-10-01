@@ -2,7 +2,7 @@
 // Pensez à incrémenter VERSION à chaque mise en ligne. Si les icônes changent, changer aussi
 // leur ?v= (index.html, manifest, pages annexes, ci-dessous) : iOS et ce cache les gardent sinon.
 
-const VERSION = 'cl-2026-10-01-4';
+const VERSION = 'cl-2026-10-01-5';
 
 const CORE = [
   './',
