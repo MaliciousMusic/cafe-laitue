@@ -1,11 +1,15 @@
-// Écran d'ouverture : le tampon s'assemble en grand au centre. « Entrer » débloque le son
-// (les navigateurs l'exigent) et lance le jingle ; le logo danse sur les notes, tamponne,
-// puis rétrécit jusqu'à sa place sur la devanture pendant que la boutique se construit
-// autour (voir screens/home.js). Affiché une fois par visite, depuis l'accueil : la décision
-// est prise dans le <head> d'index.html (classe « has-splash »), avant le premier affichage.
+// Écran d'ouverture : le tampon s'assemble en grand au centre, sur un plateau de légumes qui
+// remplit l'écran (comme la photo de l'enseigne). « Entrer » débloque le son (les navigateurs
+// l'exigent) et lance le jingle ; les légumes éclatent comme des bulles, du haut vers le bas,
+// le logo danse sur les notes, tamponne, puis rétrécit jusqu'à sa place sur la devanture
+// pendant que la boutique se construit autour (voir screens/home.js). Affiché une fois par
+// visite, depuis l'accueil : la décision est prise dans le <head> d'index.html (classe
+// « has-splash »), avant le premier affichage.
 
 import { createStamp } from '../scenes/stamp.js';
+import { layVeggies } from '../scenes/veggies.js';
 import { anim, EASE } from '../lib/motion.js';
+import { svgRoot, g } from '../lib/svg.js';
 import { play as sfx, soundOn, setSound, latency, JINGLE } from '../lib/sound.js';
 
 const AUTO_MS = 6500; // sans réponse, on entre sans le son
@@ -38,6 +42,68 @@ export function startSplash() {
   const alt = root.querySelector('#splash-alt');
   const behind = [...document.querySelectorAll('.topbar, #main, .tabbar')];
   behind.forEach((el) => el.setAttribute('inert', ''));
+
+  // ---------------------------------------------------------------- le plateau de légumes
+  const items = layVeggies();
+  const plates = [['#splash-veg', 'under'], ['#splash-veg-over', 'over']].map(([sel, layer]) => {
+    const host = root.querySelector(sel);
+    const svg = svgRoot('0 0 400 800', { preserveAspectRatio: 'none' });
+    const world = g();
+    items.filter((it) => it.layer === layer).forEach((it) => world.append(it.el));
+    svg.append(world);
+    host?.append(svg);
+    return { svg, world };
+  });
+  // Le centre de la composition (200, 338) se cale sur le centre du logo, quelle que soit la taille d'écran
+  const fit = () => {
+    const box = root.getBoundingClientRect();
+    const lr = logo.getBoundingClientRect();
+    if (!box.width || !lr.width) return;
+    const k = Math.max(box.width / 400, box.height / 800, lr.width / 250) * 1.18;
+    const cx = lr.left - box.left + lr.width / 2;
+    const cy = lr.top - box.top + lr.height / 2;
+    plates.forEach(({ svg, world }) => {
+      svg.setAttribute('viewBox', `0 0 ${box.width.toFixed(1)} ${box.height.toFixed(1)}`);
+      world.setAttribute('transform', `translate(${(cx - 200 * k).toFixed(1)} ${(cy - 338 * k).toFixed(1)}) scale(${k.toFixed(4)})`);
+    });
+  };
+  fit();
+  window.addEventListener('resize', fit);
+  const ground = items.find((it) => it.ground);
+  const veg = items.filter((it) => !it.ground);
+  veg.forEach((it) => {
+    it.pop.style.transformBox = 'fill-box';
+    it.pop.style.transformOrigin = '50% 50%';
+  });
+  // Arrivée : les légumes poussent comme des bulles, du logo vers les bords
+  anim(ground.el, [{ opacity: 0 }, { opacity: 1 }], { duration: 400, fill: 'backwards' });
+  veg.forEach((it) => {
+    const dist = Math.hypot(it.x - 200, it.y - 338);
+    anim(it.pop, [
+      { transform: 'scale(0)', opacity: 0 },
+      { transform: 'scale(1.08)', opacity: 1, offset: 0.7 },
+      { transform: 'scale(1)', opacity: 1 },
+    ], { duration: 420, delay: Math.min(700, dist * 1.1) + Math.random() * 90, easing: EASE.out, fill: 'backwards' });
+  });
+
+  /** Les légumes éclatent comme des bulles, du haut vers le bas. Résout à la fin de la vague. */
+  function burst(withSound) {
+    const order = [...veg].sort((a, b) => a.y - b.y);
+    const span = 1050;
+    let last = 0;
+    order.forEach((it, n) => {
+      const delay = Math.max(0, ((it.y + 110) / 1000) * span) + Math.random() * 70;
+      last = Math.max(last, delay);
+      anim(it.pop, [
+        { transform: 'scale(1)', opacity: 1 },
+        { transform: 'scale(1.16)', opacity: 1, offset: 0.4 },
+        { transform: 'scale(.15)', opacity: 0 },
+      ], { duration: 260, delay, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'forwards' });
+      if (withSound && n % 3 === 0) sfx('bubble', { i: Math.floor(Math.random() * 9), delay: delay + 90 });
+    });
+    anim(ground.el, [{ opacity: 1 }, { opacity: 0 }], { duration: 420, delay: 60, easing: 'ease-out', fill: 'forwards' });
+    return later(last + 280);
+  }
 
   const labels = () => {
     const on = soundOn();
@@ -121,10 +187,12 @@ export function startSplash() {
     if (over) return;
     over = true;
     document.removeEventListener('keydown', onKey);
+    window.removeEventListener('resize', fit);
     behind.forEach((el) => el.removeAttribute('inert'));
     html.classList.remove('has-splash');
     root.remove();
     active = null;
+    document.dispatchEvent(new CustomEvent('cl:splash-done'));
   }
 
   // Le logo rétrécit jusqu'à sa place sur la devanture
@@ -162,13 +230,14 @@ export function startSplash() {
       const st = await built;
       const how = await chosen;
       const withSound = how === 'sound' && soundOn();
+      const popped = burst(withSound);
       if (withSound) {
         sfx('jingle');
         const lag = latency() * 1000;
         dancing(lag);
-        await later(lag + JINGLE.hit * 1000);
+        await Promise.all([later(lag + JINGLE.hit * 1000), popped]);
       } else {
-        await later(120);
+        await popped;
       }
       st.press({ sound: withSound, gain: 0.35 });
       await later(170);

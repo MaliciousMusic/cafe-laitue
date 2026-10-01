@@ -1,4 +1,4 @@
-// Ruban crème avec texte qui défile le long de la courbe (« typo rubanée »).
+// Ruban avec texte qui défile le long de la courbe (« typo rubanée »), avec liseré facultatif.
 
 import { s, g, uid } from '../lib/svg.js';
 import { drawIn, ticker, isReduced, anim, EASE } from '../lib/motion.js';
@@ -12,6 +12,7 @@ const XLINK = 'http://www.w3.org/1999/xlink';
  * @param {number} [o.width]    épaisseur du ruban
  * @param {string} [o.text]     motif de texte répété
  * @param {number} [o.speed]    vitesse de défilement (unités/s), négatif = sens inverse
+ * @param {string} [o.trim]     couleur d'un fin liseré le long des deux bords
  */
 export function createRibbon({
   d,
@@ -24,12 +25,20 @@ export function createRibbon({
   font = FONT_DISPLAY,
   letterSpacing = 1.4,
   speed = 18,
+  trim = null,
 } = {}) {
   const G = g({ class: 'ribbon' });
   const pid = uid('rib');
   const guide = s('path', { id: pid, d, fill: 'none' });
   const bandEdge = edge ? s('path', { d, fill: 'none', stroke: edge, 'stroke-width': width + 3, 'stroke-linecap': 'round', opacity: 0.35 }) : null;
   const band = s('path', { d, fill: 'none', stroke: color, 'stroke-width': width, 'stroke-linecap': 'round', class: 'ribbon-band' });
+  // liseré : un trait clair recouvert d'un trait de la couleur du ruban, un peu plus fin
+  const trimLines = trim
+    ? [
+      s('path', { d, fill: 'none', stroke: trim, 'stroke-width': width - width * 0.17, 'stroke-linecap': 'round', opacity: 0.9 }),
+      s('path', { d, fill: 'none', stroke: color, 'stroke-width': width - width * 0.17 - 2.4, 'stroke-linecap': 'round' }),
+    ]
+    : [];
   const tp = s('textPath', { href: `#${pid}`, startOffset: '0' });
   tp.setAttributeNS(XLINK, 'xlink:href', `#${pid}`);
   const txt = s('text', {
@@ -42,7 +51,7 @@ export function createRibbon({
   }, tp);
   G.append(s('defs', {}, guide));
   if (bandEdge) G.append(bandEdge);
-  G.append(band, txt);
+  G.append(band, ...trimLines, txt);
 
   let unit = 0;
   let offset = 0;
@@ -63,6 +72,7 @@ export function createRibbon({
     drawIn(opts = {}) {
       const a = drawIn(band, { duration: 1300, easing: EASE.inOut, ...opts });
       if (bandEdge) drawIn(bandEdge, { duration: 1300, easing: EASE.inOut, ...opts });
+      trimLines.forEach((l) => drawIn(l, { duration: 1300, easing: EASE.inOut, ...opts }));
       anim(txt, [{ opacity: 0 }, { opacity: 1 }], { duration: 600, delay: (opts.delay || 0) + 900 });
       return a;
     },

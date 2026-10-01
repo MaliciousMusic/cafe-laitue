@@ -333,6 +333,12 @@ export const SOUNDS = {
   pop(c, o, t) {
     tone(c, o, t, { f: 520, f2: 1100, glide: 0.05, a: 0.003, d: 0.08, v: 0.13 });
   },
+  /** Bulle qui éclate (légumes de l'écran d'ouverture) : « blop » montant, hauteur variable. */
+  bubble(c, o, t, { i = 0, v = 0.075 }) {
+    const f = penta(i, 70);
+    tone(c, o, t, { f: f * 0.5, f2: f * 1.5, glide: 0.032, a: 0.002, d: 0.055, v });
+    noise(c, o, t, { f: 3400, q: 1.1, a: 0.001, d: 0.012, v: v * 0.3 });
+  },
   unpop(c, o, t) {
     tone(c, o, t, { f: 950, f2: 430, glide: 0.06, a: 0.003, d: 0.08, v: 0.09 });
   },

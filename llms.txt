@@ -57,7 +57,7 @@ Repères de saison : printemps (asperge, fraise, radis, petits pois, rhubarbe) ;
 
 ## Carte de fidélité
 
-Carte numérique gratuite et sans inscription, dans l'application du site (onglet « Fidélité ») : à chaque boisson (café ou jus), le primeur tamponne la carte sur le téléphone du client avec son code ; au 10e tampon, une boisson est offerte. Les tampons restent sur le téléphone : aucune donnée personnelle n'est collectée.
+Carte numérique gratuite, dans l'application du site (onglet « Fidélité ») : le client la crée avec son nom et son numéro de téléphone ; à chaque boisson (café ou jus), le primeur tamponne la carte sur le téléphone du client avec son code ; au 10e tampon, une boisson est offerte. Le nom, le numéro et les tampons restent sur le téléphone du client : rien n'est envoyé ni collecté.
 
 ## Pages
 

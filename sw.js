@@ -2,7 +2,7 @@
 // Pensez à incrémenter VERSION à chaque mise en ligne. Si les icônes changent, changer aussi
 // leur ?v= (index.html, manifest, pages annexes, ci-dessous) : iOS et ce cache les gardent sinon.
 
-const VERSION = 'cl-2026-10-01-1';
+const VERSION = 'cl-2026-10-01-4';
 
 const CORE = [
   './',
@@ -20,12 +20,14 @@ const CORE = [
   'assets/js/lib/motion.js',
   'assets/js/lib/hscroll.js',
   'assets/js/lib/sound.js',
+  'assets/js/lib/qr.js',
   'assets/js/data/season.js',
   'assets/js/data/drinks.js',
   'assets/js/data/juicebar.js',
   'assets/js/data/baskets.js',
   'assets/js/features/hours.js',
   'assets/js/features/splash.js',
+  'assets/js/features/install.js',
   'assets/js/scenes/stamp.js',
   'assets/js/scenes/ribbon.js',
   'assets/js/scenes/character.js',
@@ -33,6 +35,9 @@ const CORE = [
   'assets/js/scenes/storefront.js',
   'assets/js/scenes/shelves.js',
   'assets/js/scenes/glass.js',
+  'assets/js/scenes/basket.js',
+  'assets/js/scenes/veggies.js',
+  'assets/js/scenes/passersby.js',
   'assets/js/scenes/drinks.js',
   'assets/js/scenes/juicebar.js',
   'assets/js/scenes/latteart.js',

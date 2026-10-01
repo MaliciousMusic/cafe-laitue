@@ -32,8 +32,9 @@ export const LOYALTY = {
   goal: 10, // nombre de tampons pour une récompense
   reward: 'une boisson offerte',
   rewardDetail: 'café ou jus au choix',
-  // Code commerçant (4 chiffres) : SHA-256 de `${salt}:${code}`. Changer avec : node tools/set-pin.mjs 1234
+  // Code commerçant (6 chiffres) : SHA-256 de `${salt}:${code}`. Changer avec : node tools/set-pin.mjs 123456
+  // (version de démonstration : code d'essai à remplacer avant la mise en service)
   salt: 'cafe-laitue',
-  pinHash: '8ab2493ba0775ddf3c6d6e65d14305f1cda4db7c473382988b328514eee743d4',
+  pinHash: '385ef20fb3f00266b7ba7d74fd018f52f6d3bcafcb284f73231d6c10d80dacbf',
   maxPerVisit: 5,
 };
