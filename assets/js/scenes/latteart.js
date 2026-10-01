@@ -1,5 +1,6 @@
 // Latte art en vue plongeante : ses mains, le pichet, le filet de lait et le motif
-// (cœur ou cygne) qui se dessine à la surface. Tout est piloté par une timeline rAF.
+// (cœur, cygne, tulipe ou rosette) qui se dessine à la surface. Tout est piloté par une
+// timeline rAF.
 
 import { s, g, uid, rng, f2 } from '../lib/svg.js';
 import { isReduced } from '../lib/motion.js';
@@ -169,6 +170,23 @@ function swanHead(ox, oy, k = 1) {
   ]);
 }
 
+// ---------------------------------------------------------------- tulipe et rosette
+/** Les motifs disponibles (le comptoir en tire un au hasard). */
+export const ART_STYLES = ['heart', 'swan', 'tulip', 'rosetta'];
+
+// Tulipe : trois cœurs poussés l'un dans l'autre, versés du haut vers le bas
+const TULIP = [{ y: -23, s: 1.15 }, { y: -6, s: 1.5 }, { y: 13, s: 1.9 }];
+// Rosette : feuilles en croissant, de la plus large (en bas) à la plus fine (en haut)
+const ROSETTA = Array.from({ length: 8 }, (_, i) => {
+  const t = i / 7;
+  return { y: lerp(30, -24, t), w: lerp(28, 8, t) };
+});
+function crescent(L, x0 = 0, y0 = 0, k = 1) {
+  const w = L.w * k;
+  const y = y0 + L.y;
+  return `M${f2(x0 - w)} ${f2(y)}Q${f2(x0)} ${f2(y + w * 0.62)} ${f2(x0 + w)} ${f2(y)}Q${f2(x0)} ${f2(y + w * 0.22)} ${f2(x0 - w)} ${f2(y)}Z`;
+}
+
 // ---------------------------------------------------------------- cœur à couches (« wave heart »)
 function heartRing(i, cx, cy, k = 1) {
   return heartPts(cx, cy - 3 + i * 2.5 * k, HEART_S * (1 - i * 0.125));
@@ -181,6 +199,15 @@ export function buildArt(style = 'heart', surface = 'coffee') {
   if (style === 'swan') {
     FEATHERS.forEach((F) => G.append(feather(F, 0, 0, line)));
     G.append(s('path', { d: neckShape(0, 1), fill: MILK }), swanHead(0, 0));
+  } else if (style === 'tulip') {
+    [...TULIP].reverse().forEach((h) => G.append(s('path', { d: smooth(heartPts(0, h.y, h.s)), fill: MILK, stroke: line, 'stroke-width': 1.2 })));
+    G.append(s('path', { d: 'M0 -40L0 36', stroke: MILK, 'stroke-width': 1.8, 'stroke-linecap': 'round' }));
+  } else if (style === 'rosetta') {
+    ROSETTA.forEach((L) => G.append(s('path', { d: crescent(L), fill: MILK, stroke: line, 'stroke-width': 1 })));
+    G.append(
+      s('path', { d: smooth(heartPts(0, -32, 0.55)), fill: MILK }),
+      s('path', { d: 'M0 -34L0 38', stroke: MILK, 'stroke-width': 1.6, 'stroke-linecap': 'round' }),
+    );
   } else {
     G.append(s('path', { d: smooth(heartPts(0, -3, HEART_S)), fill: MILK }));
     for (let i = 1; i <= RINGS; i++) {
@@ -484,6 +511,95 @@ export function createLatteArt({ C = [180, 150] } = {}) {
     return { tracks: T, duration: 5650 };
   }
 
+  // Entrée des mains, filet qui démarre (commun à la tulipe et à la rosette)
+  function enter(T, pour) {
+    T.push({ from: 0, to: 650, ease: ease.out, update: (k) => { placeLeft(lerp(-160, 0, k), lerp(140, 0, k)); placeRight(lerp(cx + 240, pour.x, k), lerp(cy - 220, pour.y, k), lerp(20, 0, k)); } });
+    T.push({ from: 650, to: 850, update: (k) => { placeRight(pour.x, pour.y, lerp(0, -16, k)); setStream(pour.x, pour.y, lerp(0, 5, k)); } });
+  }
+  // Trait final de haut en bas, puis le pichet et la main repartent
+  function finale(T, t0, y0, y1, getPour, setPour) {
+    T.push({ from: t0, to: t0 + 500, ease: ease.inOut, update: (k) => {
+      const py = lerp(cy + y0, cy + y1, k);
+      pull.setAttribute('stroke', MILK);
+      pull.setAttribute('d', `M${cx} ${f2(cy + y0)}L${cx} ${f2(py)}`);
+      setPour({ x: cx, y: py });
+      placeRight(cx, py, -18 + 10 * k, 1);
+      setStream(cx, py, lerp(3.5, 1.2, k));
+    } });
+    T.push({ from: t0 + 500, to: t0 + 740, update: (k) => { const p = getPour(); setStream(p.x, p.y, lerp(1.2, 0, k)); placeRight(p.x, p.y - 10 * k, lerp(-8, 8, k), 1 + 0.04 * k); } });
+    T.push({ from: t0 + 740, to: t0 + 1340, ease: ease.in, update: (k) => { const p = getPour(); placeRight(lerp(p.x, cx + 250, k), lerp(p.y - 10, cy - 230, k), lerp(8, 24, k), 1.04 + 0.1 * k); } });
+    T.push({ from: t0 + 1140, to: t0 + 1740, ease: ease.inOut, update: (k) => placeLeft(lerp(0, -170, k), lerp(0, 150, k)) });
+    return t0 + 1740;
+  }
+
+  // ------------------------------------------------------------ tulipe
+  function tulipTracks() {
+    const T = [];
+    const els = TULIP.map(() => s('path', { fill: MILK, stroke: line, 'stroke-width': 1.2 }));
+    leaves.replaceChildren(...[...els].reverse());
+    let pour = { x: cx, y: cy + TULIP[0].y };
+    enter(T, pour);
+    TULIP.forEach((h, i) => {
+      const t0 = 850 + i * 760;
+      // Le pichet glisse vers le cœur suivant, filet aminci
+      if (i > 0) {
+        T.push({ from: t0 - 160, to: t0, update: (k) => {
+          const py = lerp(cy + TULIP[i - 1].y, cy + h.y, k);
+          pour = { x: cx, y: py };
+          placeRight(cx, py, -16, 1);
+          setStream(cx, py, lerp(2, 5, k));
+        } });
+      }
+      T.push({ from: t0, to: t0 + 600, ease: ease.out, update: (k, p, t) => {
+        const kk = Math.max(0.05, k);
+        els[i].setAttribute('d', smooth(mixPts(circlePts(cx, cy + h.y, 15 * h.s * kk, 0.05, t / 120), heartPts(cx, cy + h.y, h.s * kk), Math.min(1, k * 1.2))));
+        const wig = Math.sin(t / 70) * 2.2;
+        pour = { x: cx + wig, y: cy + h.y };
+        placeRight(pour.x, pour.y, -16 + wig, 1);
+        setStream(pour.x, pour.y, 5.5 - 1.5 * k);
+        splashPulse(t);
+      } });
+    });
+    const end = finale(T, 850 + TULIP.length * 760, -40, 36, () => pour, (p) => (pour = p));
+    return { tracks: T, duration: end };
+  }
+
+  // ------------------------------------------------------------ rosette
+  function rosettaTracks() {
+    const T = [];
+    const n = ROSETTA.length;
+    const els = ROSETTA.map(() => s('path', { fill: MILK, stroke: line, 'stroke-width': 1 }));
+    const top = s('path', { fill: MILK });
+    leaves.replaceChildren(...els, top);
+    let pour = { x: cx, y: cy + ROSETTA[0].y };
+    enter(T, pour);
+    // Le pichet ondule en remontant : une feuille par balancement
+    const step = 230;
+    T.push({ from: 850, to: 850 + n * step, ease: ease.linear, update: (k, p, t) => {
+      const q = k * n;
+      const L = ROSETTA[Math.min(n - 1, Math.floor(q))];
+      const wig = Math.sin(t / 45) * L.w * 0.8;
+      pour = { x: cx + wig, y: cy + L.y };
+      placeRight(pour.x, pour.y, -16 + wig * 0.4, 1);
+      setStream(pour.x, pour.y, 5);
+      splashPulse(t);
+      els.forEach((el, j) => {
+        const a = Math.max(0, Math.min(1, (q - j) * 1.4));
+        el.setAttribute('d', a > 0 ? crescent(ROSETTA[j], cx, cy, 0.3 + 0.7 * ease.back(a)) : '');
+      });
+    } });
+    const tt = 850 + n * step;
+    // Petit cœur au sommet, puis le trait traverse toutes les feuilles
+    T.push({ from: tt, to: tt + 300, ease: ease.back, update: (k) => {
+      top.setAttribute('d', smooth(heartPts(cx, cy - 32, 0.55 * Math.max(0.05, k))));
+      pour = { x: cx, y: cy - 32 };
+      placeRight(cx, cy - 32, -14, 1);
+      setStream(cx, cy - 32, 4);
+    } });
+    const end = finale(T, tt + 300, -34, 38, () => pour, (p) => (pour = p));
+    return { tracks: T, duration: end };
+  }
+
   function sprinkleCinnamon() {
     const r = rng(9);
     for (let i = 0; i < 70; i++) {
@@ -511,7 +627,8 @@ export function createLatteArt({ C = [180, 150] } = {}) {
       }
       // Petit tourbillon de la crème avant le versé
       specks.animate?.([{ transform: 'rotate(0deg)' }, { transform: 'rotate(40deg)' }], { duration: 2400, easing: 'ease-out', fill: 'forwards' });
-      const { tracks, duration } = style === 'swan' ? swanTracks() : heartTracks();
+      const pick = { swan: swanTracks, tulip: tulipTracks, rosetta: rosettaTracks }[style] || heartTracks;
+      const { tracks, duration } = pick();
       // Le bruit du filet de lait suit sa largeur
       pourVoice = sfx?.voice('pour') || null;
       const ok = await timeline(duration, tracks, alive);

@@ -2,7 +2,7 @@
 // Pensez à incrémenter VERSION à chaque mise en ligne. Si les icônes changent, changer aussi
 // leur ?v= (index.html, manifest, pages annexes, ci-dessous) : iOS et ce cache les gardent sinon.
 
-const VERSION = 'cl-2026-09-28-2';
+const VERSION = 'cl-2026-10-01-1';
 
 const CORE = [
   './',
@@ -22,6 +22,8 @@ const CORE = [
   'assets/js/lib/sound.js',
   'assets/js/data/season.js',
   'assets/js/data/drinks.js',
+  'assets/js/data/juicebar.js',
+  'assets/js/data/baskets.js',
   'assets/js/features/hours.js',
   'assets/js/features/splash.js',
   'assets/js/scenes/stamp.js',
@@ -30,14 +32,15 @@ const CORE = [
   'assets/js/scenes/produce.js',
   'assets/js/scenes/storefront.js',
   'assets/js/scenes/shelves.js',
-  'assets/js/scenes/portrait.js',
+  'assets/js/scenes/glass.js',
   'assets/js/scenes/drinks.js',
+  'assets/js/scenes/juicebar.js',
   'assets/js/scenes/latteart.js',
   'assets/js/scenes/backdrop.js',
   'assets/js/screens/home.js',
-  'assets/js/screens/bar.js',
+  'assets/js/screens/cafe.js',
   'assets/js/screens/stalls.js',
-  'assets/js/screens/owner.js',
+  'assets/js/screens/juicebar.js',
   'assets/js/screens/loyalty.js',
   'assets/icons/favicon.svg?v=2',
   'assets/icons/icon-192.png?v=2',

@@ -1,4 +1,5 @@
-// Le primeur, dessiné en SVG (vue de face, cagette de radis sous le bras).
+// Le primeur, Vincent, dessiné en SVG (vue de face). Deux poses : cagette de radis sous le bras
+// (`crate`) ou derrière le comptoir du bar à jus, les deux bras libres et articulés (`bar`).
 // Repère : viewBox 0 0 300 580, pieds vers y = 566. Tout est groupé pour être animé.
 
 import { s, g, rng, uid } from '../lib/svg.js';
@@ -84,6 +85,33 @@ function radishPile(rnd) {
   return G;
 }
 
+/** Géométrie du bras droit (repère du personnage) : épaule, coude, main au repos. */
+export const ARM = { shoulder: [76, 164], elbow: [60, 248], hand: [57, 360] };
+
+/** Bras droit : bras + avant-bras articulé (pivots à l'épaule et au coude). */
+function buildArm() {
+  const arm = g({ class: 'ch-arm-r' });
+  arm.style.transformBox = 'view-box';
+  arm.style.transformOrigin = `${ARM.shoulder[0]}px ${ARM.shoulder[1]}px`;
+  const forearm = g({ class: 'ch-forearm' });
+  forearm.style.transformBox = 'view-box';
+  forearm.style.transformOrigin = `${ARM.elbow[0]}px ${ARM.elbow[1]}px`;
+  forearm.append(
+    s('path', { d: 'M49 244 L46 322 L68 324 L72 246 Z', fill: PAL.denim }),
+    s('path', { d: 'M45 310 L68 312 L67 330 L44 328 Z', fill: PAL.denimLight }),
+    s('path', { d: 'M45 318 L67 320', stroke: PAL.denimDark, 'stroke-width': 0.9, opacity: 0.6 }),
+    s('rect', { x: 46, y: 329, width: 20, height: 4.2, rx: 2, fill: '#1B1B1B' }),
+    s('path', { d: 'M46 332 C43 348 48 360 57 362 C66 363 70 350 68 334 Z', fill: PAL.skin }),
+    s('path', { d: 'M47 340 C43 344 43 350 46 353', fill: 'none', stroke: PAL.skinShade, 'stroke-width': 1.2, 'stroke-linecap': 'round' }),
+  );
+  arm.append(
+    s('path', { d: 'M74 160 C60 166 52 186 50 212 L49 250 L72 250 L74 214 C76 196 78 178 80 166 Z', fill: PAL.denim }),
+    s('path', { d: 'M52 206 C50 226 50 238 49 250 L56 250 C56 232 57 220 60 206 Z', fill: PAL.denimDark, opacity: 0.4 }),
+    forearm,
+  );
+  return { arm, forearm };
+}
+
 function crate() {
   const G = g({ class: 'ch-crate' });
   G.append(
@@ -110,7 +138,8 @@ function crate() {
  * Crée le personnage.
  * @returns {{ g: SVGGElement, parts: object, idle: Function, wave: Function, blink: Function, say: Function, look: Function }}
  */
-export function createCharacter({ seed = 4 } = {}) {
+export function createCharacter({ seed = 4, pose = 'crate' } = {}) {
+  const bar = pose === 'bar';
   const rnd = rng(seed);
   const root = g({ class: 'ch' });
   const body = g({ class: 'ch-body fx-bottom' });
@@ -131,11 +160,12 @@ export function createCharacter({ seed = 4 } = {}) {
   body.append(torso);
 
   // Bras gauche (côté cagette) — derrière la cagette
-  const armL = g({ class: 'ch-arm-l' }, [
-    s('path', { d: 'M186 160 C201 166 209 186 211 212 L213 250 L192 252 L190 214 C188 196 184 178 182 166 Z', fill: PAL.denim }),
-    s('path', { d: 'M205 214 L213 250 L206 251 Z', fill: PAL.denimDark, opacity: 0.4 }),
-  ]);
-  torso.append(armL);
+  if (!bar) {
+    torso.append(g({ class: 'ch-arm-l' }, [
+      s('path', { d: 'M186 160 C201 166 209 186 211 212 L213 250 L192 252 L190 214 C188 196 184 178 182 166 Z', fill: PAL.denim }),
+      s('path', { d: 'M205 214 L213 250 L206 251 Z', fill: PAL.denimDark, opacity: 0.4 }),
+    ]));
+  }
 
   // Chemise
   torso.append(
@@ -244,35 +274,27 @@ export function createCharacter({ seed = 4 } = {}) {
   torso.append(head);
 
   // Cagette de radis (devant le bras gauche)
-  const crateG = g({ class: 'ch-crate-wrap fx-box' }, [radishPile(rnd), crate()]);
-  // Main gauche qui tient le bord de la cagette
-  crateG.append(
-    s('path', { d: 'M172 300 C170 308 176 314 186 313 C196 312 200 306 198 299 Z', fill: PAL.skin }),
-    s('path', { d: 'M178 302 v6 M184 302 v7 M190 302 v6', stroke: PAL.skinShade, 'stroke-width': 1, 'stroke-linecap': 'round' }),
-  );
-  torso.append(crateG);
+  let crateG = null;
+  if (!bar) {
+    crateG = g({ class: 'ch-crate-wrap fx-box' }, [radishPile(rnd), crate()]);
+    // Main gauche qui tient le bord de la cagette
+    crateG.append(
+      s('path', { d: 'M172 300 C170 308 176 314 186 313 C196 312 200 306 198 299 Z', fill: PAL.skin }),
+      s('path', { d: 'M178 302 v6 M184 302 v7 M190 302 v6', stroke: PAL.skinShade, 'stroke-width': 1, 'stroke-linecap': 'round' }),
+    );
+    torso.append(crateG);
+  }
 
   // Bras droit (pendant) : bras + avant-bras articulé pour saluer
-  const armR = g({ class: 'ch-arm-r' });
-  armR.style.transformBox = 'view-box';
-  armR.style.transformOrigin = '76px 164px';
-  const forearm = g({ class: 'ch-forearm' });
-  forearm.style.transformBox = 'view-box';
-  forearm.style.transformOrigin = '60px 248px';
-  forearm.append(
-    s('path', { d: 'M49 244 L46 322 L68 324 L72 246 Z', fill: PAL.denim }),
-    s('path', { d: 'M45 310 L68 312 L67 330 L44 328 Z', fill: PAL.denimLight }),
-    s('path', { d: 'M45 318 L67 320', stroke: PAL.denimDark, 'stroke-width': 0.9, opacity: 0.6 }),
-    s('rect', { x: 46, y: 329, width: 20, height: 4.2, rx: 2, fill: '#1B1B1B' }),
-    s('path', { d: 'M46 332 C43 348 48 360 57 362 C66 363 70 350 68 334 Z', fill: PAL.skin }),
-    s('path', { d: 'M47 340 C43 344 43 350 46 353', fill: 'none', stroke: PAL.skinShade, 'stroke-width': 1.2, 'stroke-linecap': 'round' }),
-  );
-  armR.append(
-    s('path', { d: 'M74 160 C60 166 52 186 50 212 L49 250 L72 250 L74 214 C76 196 78 178 80 166 Z', fill: PAL.denim }),
-    s('path', { d: 'M52 206 C50 226 50 238 49 250 L56 250 C56 232 57 220 60 206 Z', fill: PAL.denimDark, opacity: 0.4 }),
-    forearm,
-  );
+  const { arm: armR, forearm } = buildArm();
   torso.append(armR);
+  // Au bar : bras gauche articulé lui aussi (le bras droit en miroir, même repère intérieur)
+  let armL = null;
+  let forearmL = null;
+  if (bar) {
+    ({ arm: armL, forearm: forearmL } = buildArm());
+    torso.append(g({ class: 'ch-arm-l', transform: 'matrix(-1 0 0 1 260 0)' }, armL));
+  }
 
   // Formes de bouche (visèmes) : largeur, coins, lèvre du haut, lèvre du bas
   const VISEMES = {
@@ -342,7 +364,7 @@ export function createCharacter({ seed = 4 } = {}) {
     });
   }
 
-  const parts = { root, body, torso, head, eyes, eyeL, eyeR, pupils, mouth: mouthG, armR, forearm, crate: crateG };
+  const parts = { root, body, torso, head, eyes, eyeL, eyeR, pupils, mouth: mouthG, armR, forearm, armL, forearmL, crate: crateG };
   let waving = false;
 
   const api = {

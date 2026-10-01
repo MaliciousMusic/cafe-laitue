@@ -1,21 +1,20 @@
-// Le comptoir en motion design : chaque boisson apparaît en vue éclatée, s'assemble
-// (rebonds, écrasements, clapotis), puis — pour les cafés au lait — la caméra bascule
-// au-dessus de la tasse et le primeur verse son latte art (cœur ou cygne).
-// Les jus : les fruits plongent et éclatent dans le verre ; « sur demande » se compose.
+// Le café en motion design : chaque boisson apparaît en vue éclatée (ses ingrédients légendés),
+// puis se prépare étape par étape : mouture, tassage, extraction sous la machine, lait versé
+// au pichet. Pour les cafés au lait, la caméra bascule au-dessus de la tasse et Vincent verse
+// un latte art tiré au hasard (cœur, cygne, tulipe ou rosette).
 // viewBox de la scène : 0 0 360 300.
 
 import { s, g, svgRoot, uid, rng, f2 } from '../lib/svg.js';
 import { anim, EASE, isReduced, settle } from '../lib/motion.js';
-import { drawProduce } from './produce.js';
 import { FONT_DISPLAY, FONT_HAND, BRAND, brandFontsReady } from './stamp.js';
-import { DRINKS, JUICE_COLOR, JUICE_LABEL } from '../data/drinks.js';
-import { createLatteArt, buildArt } from './latteart.js';
+import { DRINKS } from '../data/drinks.js';
+import { createLatteArt, buildArt, ART_STYLES } from './latteart.js';
 import { createCharacter } from './character.js';
 import { channel } from '../lib/sound.js';
+import { K, VESSELS, P, lerp, easeInOut, hw, sliceD, vesselBack, vesselFront, strawEl } from './glass.js';
 
 const FONT_UI = '"Bricolage Grotesque", system-ui, sans-serif';
 const FONT_CHALK = '"Caveat", "Segoe Print", cursive';
-const K = 0.2; // aplatissement des ellipses (légère vue plongeante)
 const GAP = 24;
 const BASE_Y = 246;
 const TOP_LIMIT = 58;
@@ -23,60 +22,35 @@ const X_EXPLODED = 112;
 const X_ASSEMBLED = 180;
 const LABEL_X = 206;
 const INK = '#365846';
-const COMPOSER_MAX = 4;
 
 const LAYER = {
   espresso: ['#4A2616', '#B97842'],
   ristretto: ['#3E1F12', '#A86A38'],
   crema: ['#B97842', '#D5A066'],
   milk: ['#EADAC1', '#F4EADA'],
-  milkCold: ['#F1EBE0', '#FAF6EF'],
+  milkCold: ['#E4DBC8', '#F7F2E8'],
   foam: ['#FAF5EB', '#FFFDF7'],
   matcha: ['#7EA64E', '#99C166'],
   chai: ['#B7793F', '#CD9459'],
 };
 const SURFACE = { coffee: ['#DBA66B', '#A5672F'], matcha: ['#A2C563', '#6F9A40'], chai: ['#D8A96F', '#A06A36'] };
 
-const VESSELS = {
-  demitasse: { h: 50, b: 24, t: 37, bowl: 0.6, handle: true, saucer: 62, ceramic: true },
-  cup: { h: 66, b: 32, t: 57, bowl: 0.8, handle: true, saucer: 84, ceramic: true },
-  tulip: { h: 58, b: 27, t: 47, bowl: 0.7, handle: true, saucer: 72, ceramic: true },
-  glass: { h: 118, b: 33, t: 40, bowl: 0, base: 7 },
-  tall: { h: 150, b: 33, t: 43, bowl: 0, base: 8 },
-  juice: { h: 128, b: 31, t: 41, bowl: 0, base: 8 },
-  shot: { h: 58, b: 18, t: 23, bowl: 0, base: 9 },
+// Ce qui coule dans la tasse : étape du procédé, ustensile, couleur du filet, durée
+const POUR = {
+  espresso: { step: 'extract', tool: 'pf', color: '#5A2E18', ms: 1300 },
+  ristretto: { step: 'extract', tool: 'pf', color: '#4A2414', ms: 1100 },
+  crema: { step: 'extract', tool: 'pf', color: '#B97842', ms: 420 },
+  milk: { step: 'milk', tool: 'pitcher', color: '#F1E6D3', ms: 1100 },
+  milkCold: { step: 'milk', tool: 'pitcher', color: '#F6F1E8', ms: 1100 },
+  foam: { step: 'milk', tool: 'pitcher', color: '#FFFDF7', ms: 620 },
+  matcha: { step: 'matcha', tool: 'jug', color: '#8DB45A', ms: 1000 },
+  chai: { step: 'infuse', tool: 'jug', color: '#C58A4F', ms: 1000 },
 };
+const ART_NAME = { heart: 'un cœur', swan: 'un cygne', tulip: 'une tulipe', rosetta: 'une rosette' };
 
-const P = (x, y) => `${f2(x)} ${f2(y)}`;
-const lerp = (a, b, t) => a + (b - a) * t;
-const easeInOut = (k) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
 const pause = (ms) => new Promise((r) => setTimeout(r, isReduced() ? 0 : ms));
 
-// ---------------------------------------------------------------- géométrie
-function hw(v, y) {
-  const tn = Math.max(0, Math.min(1, y / v.h));
-  const e = v.bowl ? 1 - Math.pow(1 - tn, 1 + v.bowl * 1.6) : tn;
-  return v.b + (v.t - v.b) * e;
-}
-
-function sliceD(v, y0, y1) {
-  const steps = v.bowl ? 6 : 1;
-  const L = [];
-  const R = [];
-  for (let i = 0; i <= steps; i++) {
-    const y = y0 + ((y1 - y0) * i) / steps;
-    const w = hw(v, y);
-    L.push([-w, -y]);
-    R.push([w, -y]);
-  }
-  const w0 = hw(v, y0);
-  let d = `M${P(...L[steps])}`;
-  for (let i = steps - 1; i >= 0; i--) d += `L${P(...L[i])}`;
-  d += `A${f2(w0)} ${f2(w0 * K)} 0 0 0 ${P(w0, -y0)}`;
-  for (let i = 1; i <= steps; i++) d += `L${P(...R[i])}`;
-  return `${d}Z`;
-}
-
+// ---------------------------------------------------------------- géométrie de la tasse
 function layerEl(v, y0, y1, k) {
   const [side, top] = LAYER[k];
   const w1 = hw(v, y1);
@@ -91,46 +65,6 @@ function layerEl(v, y0, y1, k) {
   if (k === 'crema') {
     G.append(s('path', { d: `M${P(-w1 * 0.5, -y1)}Q${P(0, -y1 - w1 * K * 0.6)} ${P(w1 * 0.5, -y1)}`, fill: 'none', stroke: '#E6B77E', 'stroke-width': 1.4, opacity: 0.8 }));
   }
-  return G;
-}
-
-function vesselBack(v) {
-  const wall = v.ceramic ? 4 : 2.5;
-  const t = hw(v, v.h);
-  return g({ class: 'dk-vback' }, [
-    s('ellipse', { cx: 0, cy: -v.h, rx: t + wall, ry: (t + wall) * K, fill: v.ceramic ? '#F4EEE0' : 'rgba(255,255,255,.4)', stroke: BRAND.forest, 'stroke-width': 2 }),
-    s('ellipse', { cx: 0, cy: -v.h, rx: t, ry: t * K, fill: v.ceramic ? '#E6DCC6' : 'rgba(18,67,43,.05)' }),
-  ]);
-}
-
-function vesselFront(v) {
-  const wall = v.ceramic ? 4 : 2.5;
-  const steps = v.bowl ? 10 : 1;
-  const base = v.base || 0;
-  const L = [];
-  const R = [];
-  for (let i = 0; i <= steps; i++) {
-    const y = v.h - (v.h * i) / steps;
-    const w = hw(v, y) + wall;
-    L.push([-w, -y]);
-    R.push([w, -y]);
-  }
-  const wb = hw(v, 0) + wall;
-  const tt = hw(v, v.h) + wall;
-  let d = `M${P(...L[0])}`;
-  for (let i = 1; i <= steps; i++) d += `L${P(...L[i])}`;
-  d += `L${P(-wb, base)}A${f2(wb)} ${f2(wb * K)} 0 0 0 ${P(wb, base)}L${P(wb, 0)}`;
-  for (let i = steps - 1; i >= 0; i--) d += `L${P(...R[i])}`;
-  d += `A${f2(tt)} ${f2(tt * K)} 0 0 1 ${P(-tt, -v.h)}Z`;
-  const G = g({ class: 'dk-vfront' }, [
-    s('path', { d, fill: v.ceramic ? 'rgba(253,251,235,.32)' : 'rgba(255,255,255,.16)', stroke: BRAND.forest, 'stroke-width': 2.2, 'stroke-linejoin': 'round' }),
-    s('path', { d: `M${P(-tt, -v.h)}A${f2(tt)} ${f2(tt * K)} 0 0 0 ${P(tt, -v.h)}`, fill: 'none', stroke: BRAND.forest, 'stroke-width': 2.6 }),
-  ]);
-  if (base) {
-    G.append(s('path', { d: `M${P(-wb + 2, 0)}A${f2(wb - 2)} ${f2((wb - 2) * K)} 0 0 0 ${P(wb - 2, 0)}L${P(wb - 2, base - 1)}A${f2(wb - 2)} ${f2((wb - 2) * K)} 0 0 1 ${P(-wb + 2, base - 1)}Z`, fill: 'rgba(255,255,255,.45)' }));
-  }
-  const hx = -hw(v, v.h * 0.5) * 0.72;
-  G.append(s('path', { d: `M${P(hx, -v.h * 0.88)}L${P(hx - 1.5, -v.h * 0.14)}`, stroke: '#fff', 'stroke-width': v.ceramic ? 2.5 : 3.4, 'stroke-linecap': 'round', opacity: 0.55 }));
   return G;
 }
 
@@ -172,58 +106,6 @@ function iceCubes(v, yMin, yMax, seed = 3) {
   return G;
 }
 
-function strawEl(v, extra = 34) {
-  const len = v.h + extra;
-  const id = uid('straw');
-  return g({ class: 'dk-straw' }, g({ transform: `translate(${f2(hw(v, v.h) * 0.35)} 0) rotate(9)` }, [
-    s('defs', {}, s('pattern', { id, width: 7, height: 10, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(35)' }, [
-      s('rect', { width: 7, height: 10, fill: '#849E83' }),
-      s('rect', { width: 7, height: 4, fill: '#FDFBEB' }),
-    ])),
-    s('rect', { x: -3.5, y: -len, width: 7, height: len - 6, rx: 2, fill: `url(#${id})`, stroke: BRAND.forest, 'stroke-width': 1 }),
-  ]));
-}
-
-function shade(hex, k) {
-  const n = parseInt(hex.slice(1), 16);
-  const f = (c) => Math.round(k >= 0 ? c + (255 - c) * k : c * (1 + k));
-  return `#${((1 << 24) + (f(n >> 16) << 16) + (f((n >> 8) & 255) << 8) + f(n & 255)).toString(16).slice(1)}`;
-}
-
-function mixColors(list) {
-  if (!list.length) return '#F2A64A';
-  let r = 0;
-  let gg = 0;
-  let b = 0;
-  list.forEach((hex) => {
-    const n = parseInt(hex.slice(1), 16);
-    r += n >> 16;
-    gg += (n >> 8) & 255;
-    b += n & 255;
-  });
-  const k = list.length;
-  return `#${((1 << 24) + (Math.round(r / k) << 16) + (Math.round(gg / k) << 8) + Math.round(b / k)).toString(16).slice(1)}`;
-}
-
-function mixHex(a, b, t) {
-  const A = parseInt(a.slice(1), 16);
-  const B = parseInt(b.slice(1), 16);
-  const c = (sh) => Math.round(lerp((A >> sh) & 255, (B >> sh) & 255, t));
-  return `#${((1 << 24) + (c(16) << 16) + (c(8) << 8) + c(0)).toString(16).slice(1)}`;
-}
-
-function wheel(color, r = 13) {
-  const G = g({ class: 'dk-wheel' });
-  G.append(s('circle', { r, fill: color, stroke: shade(color, -0.25), 'stroke-width': 2.4 }));
-  G.append(s('circle', { r: r - 3.2, fill: shade(color, 0.25) }));
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2;
-    G.append(s('path', { d: `M0 0L${f2(Math.cos(a) * (r - 3.4))} ${f2(Math.sin(a) * (r - 3.4))}`, stroke: color, 'stroke-width': 1.2 }));
-  }
-  G.append(s('circle', { r: 1.6, fill: shade(color, -0.1) }));
-  return G;
-}
-
 function steamEl(v) {
   const G = g({ class: 'dk-steam', opacity: 0 });
   [-11, 1, 13].forEach((x, i) => {
@@ -261,6 +143,41 @@ function artGarnish(v, topY, style, surface = 'coffee', cinnamon = false) {
   return { g: G, setStyle: (st) => motif.replaceChildren(buildArt(st, surface)) };
 }
 
+// ---------------------------------------------------------------- ustensiles du procédé
+// Chacun a son bec en (0,0) (repère du contenant une fois placé).
+function portafilterEl() {
+  const head = g({ class: 'dk-group' }, [
+    s('rect', { x: -32, y: -44, width: 64, height: 18, rx: 3, fill: '#2C3438' }),
+    s('rect', { x: -24, y: -27, width: 48, height: 4, fill: '#8E9AA2' }),
+  ]);
+  const basket = g({ class: 'dk-pf' }, [
+    s('path', { d: 'M-24 -24H24L20 -8H-20Z', fill: '#D7DDE0', stroke: '#6E7A80', 'stroke-width': 1.4, 'stroke-linejoin': 'round' }),
+    s('rect', { x: 22, y: -22, width: 48, height: 8, rx: 4, fill: '#1F1F1F' }),
+    s('path', { d: 'M-7 -8V-1M7 -8V-1', stroke: '#6E7A80', 'stroke-width': 3.4, 'stroke-linecap': 'round' }),
+  ]);
+  const tamper = g({ class: 'dk-tamper', opacity: 0 }, [
+    s('rect', { x: -19, y: -40, width: 38, height: 9, rx: 2, fill: '#9AA4A9', stroke: '#6E7A80', 'stroke-width': 1.2 }),
+    s('path', { d: 'M-6 -40C-6 -52 6 -52 6 -40Z', fill: '#5A3A24' }),
+    s('ellipse', { cx: 0, cy: -55, rx: 8, ry: 7, fill: '#6B4A2E' }),
+  ]);
+  return { g: g({ class: 'dk-espresso' }, [head, basket, tamper]), head, basket, tamper };
+}
+
+function pitcherEl(fill, stroke) {
+  return g({ class: 'dk-pitcher' }, [
+    s('path', { d: 'M0 0Q3 -3 7 -4L9 -30H40L42 6Q42 12 36 12H13Q8 12 8 6Z', fill, stroke, 'stroke-width': 1.4, 'stroke-linejoin': 'round' }),
+    s('path', { d: 'M42 -22C56 -22 56 2 42 2', fill: 'none', stroke, 'stroke-width': 4, 'stroke-linecap': 'round' }),
+    s('path', { d: 'M14 -26V6', stroke: '#fff', 'stroke-width': 2.4, 'stroke-linecap': 'round', opacity: 0.6 }),
+  ]);
+}
+
+function beanEl() {
+  return g({}, [
+    s('ellipse', { cx: 0, cy: 0, rx: 3.4, ry: 4.6, fill: '#5A3420' }),
+    s('path', { d: 'M-0.6 -3.6C1.4 -1 -1.6 1 0.6 3.6', fill: 'none', stroke: '#C9955E', 'stroke-width': 0.9 }),
+  ]);
+}
+
 // ---------------------------------------------------------------- construction des boissons
 function buildCup(def, iced, style) {
   const variant = iced && def.icedVersion ? { ...def, ...def.icedVersion } : def;
@@ -285,7 +202,7 @@ function buildCup(def, iced, style) {
     const el = layerEl(v, y, y + L.h, L.k);
     layersG.append(el);
     const mid = y + L.h / 2;
-    add(el, { x: 0, y: -(v.h + (i + 1) * GAP) }, { name: L.label, sub: L.sub }, { x: hw(v, mid) + 2, y: -mid }, 'layer', { top: y + L.h + hw(v, y + L.h) * K });
+    add(el, { x: 0, y: -(v.h + (i + 1) * GAP) }, { name: L.label, sub: L.sub }, { x: hw(v, mid) + 2, y: -mid }, 'layer', { top: y + L.h + hw(v, y + L.h) * K, lk: L.k, y0: y, y1: y + L.h });
     y += L.h;
   });
   if (variant.ice) {
@@ -305,6 +222,9 @@ function buildCup(def, iced, style) {
     });
   }
   const topY = y;
+  // Les filets passent derrière la paroi avant : ils entrent dans la tasse
+  const streams = g({ class: 'dk-streams' });
+  root.append(streams);
   const front = vesselFront(v);
   root.append(front);
   const vesselLabel = v.ceramic
@@ -331,116 +251,12 @@ function buildCup(def, iced, style) {
       extraTop = 36;
     }
   }
+  const tools = g({ class: 'dk-tools' });
+  root.append(tools);
   const steam = def.hot && !(iced && def.icedVersion) ? steamEl(v) : null;
   if (steam) root.append(steam);
   const height = Math.max(v.h, topY) + extraTop + 10;
-  return { root, parts, steam, height, v, topY, art, surface: def.surface, iced: !!(iced && def.icedVersion) };
-}
-
-function liquidEls(v) {
-  const body = s('path', { class: 'dk-liq-body' });
-  const top = s('ellipse', { class: 'dk-liq-top' });
-  top.style.transformBox = 'fill-box';
-  top.style.transformOrigin = '50% 50%';
-  const G = g({ class: 'dk-liquid' }, [body, top]);
-  const state = { level: 0, color: '#F2A64A', wob: 0, t: 0 };
-  const draw = () => {
-    const L = state.level;
-    if (L < 0.6) {
-      body.setAttribute('d', '');
-      top.setAttribute('rx', 0);
-      return;
-    }
-    const w = hw(v, L);
-    body.setAttribute('d', sliceD(v, 0, L));
-    body.setAttribute('fill', shade(state.color, -0.07));
-    top.setAttribute('cx', 0);
-    top.setAttribute('cy', f2(-L));
-    top.setAttribute('rx', f2(w));
-    top.setAttribute('ry', f2(w * K * (1 + state.wob * 0.9 * Math.sin(state.t / 55))));
-    top.setAttribute('fill', shade(state.color, 0.2));
-    top.setAttribute('transform', `rotate(${f2(state.wob * 7 * Math.sin(state.t / 90))} 0 ${f2(-L)})`);
-  };
-  /** Remplit / vide jusqu'à `level` en changeant de couleur, avec clapotis. */
-  const tween = (level, color, dur = 650) => new Promise((resolve) => {
-    const l0 = state.level;
-    const c0 = state.color;
-    const t0 = performance.now();
-    if (isReduced()) {
-      Object.assign(state, { level, color, wob: 0 });
-      draw();
-      return resolve();
-    }
-    const frame = (now) => {
-      const k = Math.min(1, (now - t0) / dur);
-      state.level = lerp(l0, level, easeInOut(k));
-      state.color = mixHex(c0, color, k);
-      state.t = now;
-      state.wob = Math.max(0, 1 - k) * 0.9 + 0.08 * (1 - k);
-      draw();
-      if (k < 1) requestAnimationFrame(frame);
-      else {
-        // le liquide se calme
-        const t1 = performance.now();
-        const calm = (n2) => {
-          const q = Math.min(1, (n2 - t1) / 700);
-          state.wob = 0.35 * (1 - q);
-          state.t = n2;
-          draw();
-          if (q < 1) requestAnimationFrame(calm);
-        };
-        requestAnimationFrame(calm);
-        resolve();
-      }
-    };
-    requestAnimationFrame(frame);
-  });
-  const set = (level, color) => {
-    Object.assign(state, { level, color, wob: 0 });
-    draw();
-  };
-  return { g: G, tween, set, state };
-}
-
-function buildJuice(def, fruits, { composer = false } = {}) {
-  const v = VESSELS[def.vessel];
-  const root = g({ class: 'dk-drink dk-juice' });
-  const parts = [];
-  const back = vesselBack(v);
-  root.append(back);
-  const liquid = liquidEls(v);
-  root.append(liquid.g);
-  const bubbles = g({ class: 'dk-bubbles', opacity: 0 });
-  const r = rng(4);
-  for (let i = 0; i < 7; i++) {
-    bubbles.append(s('circle', { cx: f2((r() - 0.5) * hw(v, 20) * 1.3), cy: f2(-8 - r() * v.h * 0.6), r: f2(1 + r() * 1.6), fill: '#fff', opacity: 0.55 }));
-  }
-  root.append(bubbles);
-  const splashG = g({ class: 'dk-splash' });
-  const front = vesselFront(v);
-  root.append(front, splashG);
-  parts.push({ els: [back, front], off: { x: 0, y: 10 }, label: { name: def.vessel === 'shot' ? 'Verre à shot' : 'Verre', sub: 'bien frais' }, anchor: { x: hw(v, v.h * 0.3) + 4, y: -v.h * 0.3 }, kind: 'vessel', vessel: true });
-  const fruitEls = fruits.map((f, i) => {
-    const el = g({ class: 'dk-fruit' });
-    const pop = g({ class: 'dk-pop' });
-    pop.append(g({ transform: `translate(0 ${f2(-v.h - 8)}) scale(${def.vessel === 'shot' ? 1.5 : 1.75})` }, drawProduce(f.id, 3 + i)));
-    el.append(pop);
-    root.append(el);
-    const zig = fruits.length > 1 ? (i % 2 ? 16 : -16) : 0;
-    parts.push({ els: [el], off: { x: zig, y: -(i + 1) * 38 - 8 }, label: { name: f.label, sub: f.sub }, anchor: { x: 20, y: -v.h - 8 }, top: v.h + 26, kind: 'fruit', fruit: true, fid: f.id, pop });
-    return el;
-  });
-  let garnish = null;
-  if (def.garnish && !composer) {
-    const wheelG = g({ class: 'dk-garnish' }, g({ transform: `translate(${f2(hw(v, v.h) - 2)} ${f2(-v.h + 2)})` }, wheel(def.garnish.color, 13)));
-    const straw = strawEl(v, 30);
-    root.insertBefore(straw, front);
-    root.append(wheelG);
-    garnish = { wheelG, straw };
-    parts.push({ els: [wheelG, straw], off: { x: 40, y: -30 }, label: { name: def.garnish.label, sub: def.garnish.sub }, anchor: { x: hw(v, v.h) + 12, y: -v.h }, kind: 'garnish', garnish: true });
-  }
-  const max = v.h * (def.vessel === 'shot' ? 0.8 : 0.84);
-  return { root, parts, liquid, bubbles, fruitEls, splashG, garnish, height: v.h + 40, v, juice: true, max, composer, fruitsList: fruits };
+  return { root, parts, steam, height, v, topY, art, streams, tools, surface: def.surface, iced: !!(iced && def.icedVersion) };
 }
 
 function buildV60(iced) {
@@ -468,7 +284,7 @@ function buildV60(iced) {
       s('rect', { x: -7, y: -7, width: 14, height: 14, rx: 3, fill: 'rgba(196,226,240,.8)', stroke: '#5F8FA6', 'stroke-width': 1.1 }),
     ])));
     root.insertBefore(ice, carafe.nextSibling);
-    parts.push({ els: [ice], off: { x: 0, y: -26 }, label: { name: 'Glaçons', sub: 'le café coule dessus' }, anchor: { x: 26, y: -24 }, kind: 'ice' });
+    parts.push({ els: [ice], off: { x: 0, y: -26 }, label: { name: 'Glaçons', sub: 'le café coule dessus' }, anchor: { x: 26, y: -24 }, kind: 'ice', step: 'ice' });
   }
   const dBack = g({ class: 'dk-dripper-back' }, [s('ellipse', { cx: 0, cy: -126, rx: 37, ry: 7.4, fill: '#E7DFCB', stroke: BRAND.forest, 'stroke-width': 2 })]);
   const filter = g({ class: 'dk-filter' }, [
@@ -486,8 +302,8 @@ function buildV60(iced) {
   ]);
   root.append(dBack, filter, grounds, dFront);
   parts.push({ els: [dBack, dFront], off: { x: 0, y: -22 }, label: { name: 'Dripper V60', sub: 'extraction douce' }, anchor: { x: 30, y: -104 }, kind: 'vessel2' });
-  parts.push({ els: [filter], off: { x: 0, y: -48 }, label: { name: 'Filtre papier', sub: 'rincé à l’eau chaude' }, anchor: { x: 30, y: -128 }, kind: 'layer' });
-  parts.push({ els: [grounds], off: { x: 0, y: -72 }, label: { name: 'Mouture', sub: 'grains Kaduck, moulus minute' }, anchor: { x: 26, y: -118 }, kind: 'layer' });
+  parts.push({ els: [filter], off: { x: 0, y: -48 }, label: { name: 'Filtre papier', sub: 'rincé à l’eau chaude' }, anchor: { x: 30, y: -128 }, kind: 'layer', step: 'rinse' });
+  parts.push({ els: [grounds], off: { x: 0, y: -72 }, label: { name: 'Mouture', sub: 'grains Kaduck, moulus minute' }, anchor: { x: 26, y: -118 }, kind: 'layer', step: 'grind' });
   const water = g({ class: 'dk-water' }, [
     s('path', { d: 'M0-150C-7-139-8-133-8-130A8 8 0 0 0 8-130C8-133 7-139 0-150Z', fill: '#9CC6D8', stroke: '#5E93AA', 'stroke-width': 1.2 }),
   ]);
@@ -496,37 +312,7 @@ function buildV60(iced) {
   const stream = s('path', { d: 'M0-200V-122', stroke: '#9CC6D8', 'stroke-width': 3, 'stroke-linecap': 'round', opacity: 0, class: 'dk-stream' });
   const drops = g({ class: 'dk-drops' }, [0, 1, 2].map((i) => s('ellipse', { cx: 0, cy: -82, rx: 1.8, ry: 2.6, fill: '#5C3019', opacity: 0, class: `dk-drop-${i}` })));
   root.append(stream, drops);
-  return { root, parts, height: 136, coffee, stream, drops, water, v60: true, iced };
-}
-
-// ---------------------------------------------------------------- nom du jus composé
-function hue(hex) {
-  const n = parseInt(hex.slice(1), 16);
-  const r = (n >> 16) / 255;
-  const gg = ((n >> 8) & 255) / 255;
-  const b = (n & 255) / 255;
-  const mx = Math.max(r, gg, b);
-  const mn = Math.min(r, gg, b);
-  if (mx === mn) return 0;
-  const d = mx - mn;
-  let h = mx === r ? (gg - b) / d + (gg < b ? 6 : 0) : mx === gg ? (b - r) / d + 2 : (r - gg) / d + 4;
-  return h * 60;
-}
-
-export function juiceName(ids, color) {
-  if (!ids.length) return 'Composez votre jus';
-  if (ids.length === 1) return `100 % ${JUICE_LABEL[ids[0]].toLowerCase()}`;
-  const h = hue(color);
-  let base;
-  if (ids.includes('betterave')) base = 'Rouge de terre';
-  else if (ids.includes('raisin') || ids.includes('myrtille')) base = 'Vendanges';
-  else if (h < 12 || h >= 330) base = 'Rouge passion';
-  else if (h < 36) base = 'Soleil d’Auvergne';
-  else if (h < 58) base = 'Rayon doux';
-  else if (h < 160) base = 'Vert tonique';
-  else base = 'Petit grain de folie';
-  if (ids.includes('gingembre')) base += ' qui pique';
-  return base;
+  return { root, parts, height: 136, coffee, stream, drops, water, grounds, v60: true, iced };
 }
 
 // ---------------------------------------------------------------- scène
@@ -547,12 +333,14 @@ export async function createDrinkScene() {
   let exploded = false;
   let run = 0;
   let onChange = () => {};
+  let artStyle = ART_STYLES[0];
   const idleAnims = [];
   const stopIdle = () => idleAnims.splice(0).forEach((a) => a && a.cancel());
   const begin = () => {
     const my = ++run;
     return () => my === run;
   };
+  const step = (k) => onChange({ phase: 'step', step: k });
 
   const drinkTransform = (st, isExploded) => `translate(${isExploded ? X_EXPLODED : X_ASSEMBLED}px, ${BASE_Y}px) scale(${isExploded ? st.scaleE : st.scaleA})`;
 
@@ -605,7 +393,7 @@ export async function createDrinkScene() {
   function setPartsExploded(build, on) {
     build.parts.forEach((p) => p.els.forEach((el) => {
       el.style.transform = on ? `translate(${p.off.x}px, ${p.off.y}px)` : '';
-      el.style.opacity = on && p.fruit ? '1' : '';
+      el.style.opacity = '';
     }));
   }
 
@@ -622,6 +410,8 @@ export async function createDrinkScene() {
     avatarLayer.getAnimations({ subtree: true }).forEach((a) => a.cancel());
     avatarLayer.setAttribute('opacity', 0);
     labels.style.opacity = '';
+    if (cur?.build.tools) cur.build.tools.replaceChildren();
+    if (cur?.build.streams) cur.build.streams.replaceChildren();
   }
 
   // ------------------------------------------------------------ vue éclatée
@@ -649,10 +439,6 @@ export async function createDrinkScene() {
     sfx.play('whoosh');
     const b = cur.build;
     if (b.steam) b.steam.setAttribute('opacity', 0);
-    if (b.juice) {
-      b.liquid.tween(0, b.liquid.state.color, 420);
-      b.bubbles.setAttribute('opacity', 0);
-    }
     if (b.v60) {
       b.coffee.style.transform = 'scaleY(0)';
       b.stream.setAttribute('opacity', 0);
@@ -660,13 +446,11 @@ export async function createDrinkScene() {
     }
     const list = [anim(cur.wrap, [{ transform: drinkTransform(cur, false) }, { transform: drinkTransform(cur, true) }], { duration: 640, easing: EASE.inOut })];
     b.parts.forEach((p, i) => {
-      const from = p.fruit ? { transform: 'translate(0px, 26px) scale(.25)', opacity: 0 } : { transform: 'translate(0px, 0px)' };
-      const to = p.fruit ? { transform: `translate(${p.off.x}px, ${p.off.y}px) scale(1)`, opacity: 1 } : { transform: `translate(${p.off.x}px, ${p.off.y}px)` };
       p.els.forEach((el) => {
         setOrigin(el, '50% 50%');
-        list.push(anim(el, [from, to], { duration: 640, delay: i * 40, easing: EASE.out }));
+        el.style.opacity = '';
+        list.push(anim(el, [{ transform: 'translate(0px, 0px)' }, { transform: `translate(${p.off.x}px, ${p.off.y}px)` }], { duration: 640, delay: i * 40, easing: EASE.out }));
       });
-      if (p.pop) p.pop.getAnimations().forEach((a) => a.cancel());
     });
     labels.querySelectorAll('.dk-label').forEach((L, i) => list.push(anim(L, [{ opacity: 0, transform: 'translateX(-10px)' }, { opacity: 1, transform: 'translateX(0)' }], { duration: 360, delay: 320 + i * 60 })));
     await Promise.all(list.map((a) => settle(a)));
@@ -711,52 +495,233 @@ export async function createDrinkScene() {
     ], { duration: 620, easing: 'ease-out', fill: 'none' });
   }
 
-  async function assemble(alive) {
-    if (!cur) return false;
-    exploded = false;
+  /** Pose des pièces (soucoupe, tasse, anse, glaçons…) avec leurs petits bruits. */
+  async function dock(list, alive, { gap = 190 } = {}) {
     const b = cur.build;
-    if (b.juice) return assembleJuice(alive);
-    const order = b.parts
-      .map((p, i) => ({ p, i }))
-      .sort((a, z) => {
-        const rank = (x) => (x.p.kind === 'saucer' ? 0 : x.p.vessel ? 1 : x.p.kind === 'handle' ? 2 : x.p.kind === 'garnish' || x.p.kind === 'straw' ? 9 : 3);
-        return rank(a) - rank(z) || z.p.off.y - a.p.off.y;
-      });
-    const list = [];
-    let t = 0;
-    sfx.play('gather');
     const mat = b.v60 || !b.v?.ceramic ? 'glass' : 'ceramic';
-    let nLayer = 0;
-    const landing = (p) => {
+    const sound = (p) => {
       if (p.kind === 'saucer') return ['clink', { mat: 'ceramic', i: -3, v: 0.07 }];
       if (p.kind === 'vessel') return ['clink', { mat, i: 0, v: 0.07 }];
       if (p.kind === 'vessel2') return ['clink', { mat: 'ceramic', i: 2, v: 0.05 }];
       if (p.kind === 'handle') return ['clink', { mat: 'ceramic', i: 4, v: 0.035 }];
-      if (p.kind === 'layer') return b.v60 ? ['paper', {}] : ['liquid', { i: nLayer++ }];
       if (p.kind === 'ice') return ['ice', { n: 2 }];
-      if (p.kind === 'straw') return ['paper', {}];
-      return ['liquid', { i: 4, v: 0.05 }];
+      return ['paper', {}];
     };
-    order.forEach(({ p }) => {
+    const anims = [];
+    let t = 0;
+    list.forEach((p) => {
       const delay = t;
-      t += p.kind === 'ice' ? 110 : 190;
-      const [snd, o] = landing(p);
+      t += p.kind === 'ice' ? 110 : gap;
+      const [snd, o] = sound(p);
       const dur = p.kind === 'handle' ? 560 : 620;
       sfx.play(snd, { ...o, delay: delay + dur * (p.kind === 'handle' ? 0.62 : p.off.y > 0 ? 0.7 : 0.55) });
+      if (p.step) setTimeout(() => alive() && step(p.step), delay);
       p.els.forEach((el) => {
         setOrigin(el, p.kind === 'handle' ? '0% 50%' : '50% 100%');
-        const a = anim(el, dockFrames(p), { duration: p.kind === 'handle' ? 560 : 620, delay, easing: 'cubic-bezier(.5,0,.3,1)' });
-        list.push(a);
-        if (p.kind === 'layer' && a) a.finished.then(() => alive() && slosh(el)).catch(() => {});
+        el.style.opacity = '';
+        anims.push(anim(el, dockFrames(p), { duration: dur, delay, easing: 'cubic-bezier(.5,0,.3,1)' }));
       });
-      if (p.labelEl) list.push(anim(p.labelEl, [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: 'translateX(-8px)' }], { duration: 260, delay }));
+      if (p.labelEl) anims.push(anim(p.labelEl, [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: 'translateX(-8px)' }], { duration: 260, delay }));
     });
-    list.push(anim(cur.wrap, [{ transform: drinkTransform(cur, true) }, { transform: drinkTransform(cur, false) }], {
-      duration: 820, delay: Math.max(0, t - 420), easing: EASE.inOut,
-    }));
-    await Promise.all(list.map((a) => settle(a)));
+    await Promise.all(anims.map((a) => settle(a)));
+    return alive();
+  }
+
+  /** Filet entre le bec (x, y0) et la surface (y1), dans le repère du contenant. */
+  function streamTo(b, color, w, x, y0) {
+    const el = s('path', { fill: 'none', stroke: color, 'stroke-width': w, 'stroke-linecap': 'round' });
+    b.streams.append(el);
+    return { set: (y1) => el.setAttribute('d', `M${f2(x)} ${f2(y0)}L${f2(x)} ${f2(y1)}`), remove: () => el.remove() };
+  }
+
+  /** Une couche monte depuis son fond pendant que le filet coule. */
+  function grow(layer, ms, alive, onTop) {
+    const el = layer.els[0];
+    setOrigin(el, '50% 100%');
+    el.style.opacity = '';
+    if (isReduced()) {
+      el.style.transform = '';
+      return Promise.resolve(alive());
+    }
+    el.style.transform = 'translate(0px, 0px) scale(1, 0)';
+    return new Promise((resolve) => {
+      const t0 = performance.now();
+      const frame = (now) => {
+        if (!alive()) return resolve(false);
+        const k = Math.min(1, (now - t0) / ms);
+        el.style.transform = `translate(0px, 0px) scale(1, ${f2(Math.max(0.001, easeInOut(k)))})`;
+        onTop(-(layer.y0 + (layer.y1 - layer.y0) * easeInOut(k)));
+        if (k < 1) requestAnimationFrame(frame);
+        else {
+          el.style.transform = '';
+          slosh(el);
+          resolve(true);
+        }
+      };
+      requestAnimationFrame(frame);
+    });
+  }
+
+  /** Mouture (et tassage) : le porte-filtre se remplit sous le moulin. */
+  async function grind(b, pf, top, alive, tamp) {
+    step('grind');
+    sfx.play('roll', { dur: 0.45 });
+    const beans = [];
+    for (let i = 0; i < 6; i++) {
+      const bean = g({}, beanEl());
+      pf.g.append(bean);
+      beans.push(anim(bean, [
+        { transform: `translate(${f2((i % 3 - 1) * 9)}px, -110px) rotate(0deg)`, opacity: 1 },
+        { transform: `translate(${f2((i % 3 - 1) * 6)}px, -26px) rotate(${i % 2 ? 160 : -140}deg)`, opacity: 1, offset: 0.85 },
+        { transform: `translate(${f2((i % 3 - 1) * 6)}px, -20px) rotate(${i % 2 ? 180 : -160}deg)`, opacity: 0 },
+      ], { duration: 520, delay: i * 70, easing: EASE.in, fill: 'forwards' }));
+    }
+    await Promise.all(beans.map((a) => a?.finished.catch(() => {})));
+    pf.g.querySelectorAll(':scope > g:not(.dk-group):not(.dk-pf):not(.dk-tamper)').forEach((el) => el.remove());
     if (!alive()) return false;
-    if (b.v60) await brew(b, alive);
+    if (tamp) {
+      step('tamp');
+      pf.tamper.setAttribute('opacity', 1);
+      await settle(anim(pf.tamper, [
+        { transform: 'translateY(-34px)', opacity: 0 },
+        { transform: 'translateY(0px)', opacity: 1, offset: 0.55 },
+        { transform: 'translateY(3px)', offset: 0.75 },
+        { transform: 'translateY(-40px)', opacity: 0 },
+      ], { duration: 900, easing: EASE.inOut }));
+      sfx.play('clack', { v: 0.08 });
+      pf.tamper.setAttribute('opacity', 0);
+    }
+    void top;
+    return alive();
+  }
+
+  /** Une séance de versement (un même ustensile pour une ou plusieurs couches). */
+  async function pourSession(b, sess, alive) {
+    const v = b.v;
+    const top = -v.h;
+    const kind = POUR[sess.layers[0].lk];
+    let tool;
+    let spouts;
+    if (kind.tool === 'pf') {
+      // Porte-filtre au-dessus de la tasse ; la tête de groupe descend, deux filets
+      const pf = portafilterEl();
+      pf.g.setAttribute('transform', `translate(0 ${f2(top - 34)})`);
+      b.tools.append(pf.g);
+      pf.head.setAttribute('opacity', 0);
+      await settle(anim(pf.basket, [{ transform: 'translate(70px, -10px)', opacity: 0 }, { transform: 'translate(0px, 0px)', opacity: 1 }], { duration: 420, easing: EASE.out }));
+      if (!alive()) return false;
+      if (!(await grind(b, pf, top, alive, sess.tamp))) return false;
+      pf.head.setAttribute('opacity', 1);
+      await settle(anim(pf.head, [{ transform: 'translateY(-30px)', opacity: 0 }, { transform: 'translateY(0px)', opacity: 1 }], { duration: 320, easing: EASE.out }));
+      sfx.play('clack', { v: 0.06 });
+      if (!alive()) return false;
+      step(kind.step);
+      tool = pf.g;
+      spouts = [-7, 7].map((x) => [x, top - 35]);
+    } else {
+      step(kind.step);
+      const steel = kind.tool === 'pitcher';
+      const pitcher = pitcherEl(steel ? '#D7DDE0' : '#F3ECDB', steel ? '#6E7A80' : BRAND.forest);
+      const sx = -hw(v, v.h) * 0.3;
+      const sy = top - 22;
+      const holder = g({ transform: `translate(${f2(sx)} ${f2(sy)})` }, pitcher);
+      b.tools.append(holder);
+      pitcher.style.transformBox = 'view-box';
+      pitcher.style.transformOrigin = '0px 0px';
+      await settle(anim(pitcher, [
+        { transform: 'translate(60px, -40px) rotate(0deg)', opacity: 0 },
+        { transform: 'translate(0px, 0px) rotate(0deg)', opacity: 1, offset: 0.55 },
+        { transform: 'translate(0px, 0px) rotate(-30deg)', opacity: 1 },
+      ], { duration: 520, easing: EASE.inOut }));
+      if (!alive()) return false;
+      tool = holder;
+      spouts = [[sx, sy + 2]];
+    }
+    // Les couches montent l'une après l'autre sous le filet
+    const pour = sfx.voice('pour');
+    pour.level(kind.tool === 'pf' ? 0.35 : 0.75);
+    for (const layer of sess.layers) {
+      const k = POUR[layer.lk];
+      const lines = spouts.map(([x, y]) => streamTo(b, k.color, kind.tool === 'pf' ? 2.2 : 4.4, x, y));
+      const ok = await grow(layer, k.ms, alive, (y1) => lines.forEach((l) => l.set(y1 + 1)));
+      lines.forEach((l) => l.remove());
+      if (!ok) {
+        pour.stop();
+        return false;
+      }
+    }
+    pour.stop();
+    sfx.play('liquid', { i: 2, v: 0.06 });
+    // L'ustensile repart
+    await settle(anim(tool, [{ opacity: 1 }, { opacity: 0 }], { duration: 300 }));
+    tool.remove();
+    return alive();
+  }
+
+  /** La tasse se prépare : contenant, glaçons, puis chaque liquide versé dans l'ordre. */
+  async function brewCup(alive) {
+    const b = cur.build;
+    // Les ingrédients flottants s'effacent : ils vont être versés
+    const floating = b.parts.filter((p) => p.kind === 'layer' || p.kind === 'garnish' || p.kind === 'straw');
+    const fade = floating.flatMap((p) => p.els.map((el) => anim(el, [
+      { transform: `translate(${p.off.x}px, ${p.off.y}px) scale(1)`, opacity: 1 },
+      { transform: `translate(${p.off.x}px, ${p.off.y - 14}px) scale(.6)`, opacity: 0 },
+    ], { duration: 320, easing: EASE.in, fill: 'forwards' })));
+    const fadeLabels = floating.filter((p) => p.labelEl).map((p) => anim(p.labelEl, [{ opacity: 1 }, { opacity: 0 }], { duration: 260 }));
+    sfx.play('gather');
+    await Promise.all([...fade.map((a) => a?.finished.catch(() => {})), ...fadeLabels.map((a) => settle(a))]);
+    floating.forEach((p) => p.els.forEach((el) => {
+      el.getAnimations().forEach((a) => a.cancel());
+      el.style.opacity = '0';
+    }));
+    // La tasse se pose et glisse au centre
+    const cup = b.parts.filter((p) => p.kind === 'saucer' || p.vessel || p.kind === 'handle');
+    anim(cur.wrap, [{ transform: drinkTransform(cur, true) }, { transform: drinkTransform(cur, false) }], { duration: 820, easing: EASE.inOut });
+    if (!(await dock(cup, alive))) return false;
+    cur.wrap.style.transform = drinkTransform(cur, false);
+    labels.querySelectorAll('.dk-label').forEach((L) => (L.style.opacity = '0'));
+    // Glaçons d'abord pour les versions glacées
+    const ice = b.parts.filter((p) => p.kind === 'ice');
+    if (ice.length) {
+      step('ice');
+      if (!(await dock(ice, alive))) return false;
+    }
+    // Séances de versement : couches consécutives d'un même ustensile
+    const layers = b.parts.filter((p) => p.kind === 'layer');
+    const sessions = [];
+    layers.forEach((p) => {
+      const last = sessions[sessions.length - 1];
+      if (last && POUR[last.layers[0].lk].tool === POUR[p.lk].tool) last.layers.push(p);
+      else sessions.push({ layers: [p] });
+    });
+    sessions.forEach((sess) => (sess.tamp = cur.id === 'expresso'));
+    for (const sess of sessions) {
+      if (!(await pourSession(b, sess, alive))) return false;
+    }
+    // Paille des versions glacées
+    const straw = b.parts.filter((p) => p.kind === 'straw');
+    if (straw.length && !(await dock(straw, alive))) return false;
+    return alive();
+  }
+
+  async function assemble(alive) {
+    if (!cur) return false;
+    exploded = false;
+    const b = cur.build;
+    if (!b.v60) return brewCup(alive);
+    // V60 : les pièces se posent (rinçage du filtre, mouture), puis l'eau coule
+    const order = b.parts
+      .map((p, i) => ({ p, i }))
+      .sort((a, z) => {
+        const rank = (x) => (x.p.vessel ? 0 : x.p.kind === 'ice' ? 1 : x.p.kind === 'vessel2' ? 2 : 3);
+        return rank(a) - rank(z) || z.p.off.y - a.p.off.y;
+      })
+      .map((x) => x.p);
+    sfx.play('gather');
+    anim(cur.wrap, [{ transform: drinkTransform(cur, true) }, { transform: drinkTransform(cur, false) }], { duration: 820, delay: 400, easing: EASE.inOut });
+    if (!(await dock(order, alive))) return false;
+    cur.wrap.style.transform = drinkTransform(cur, false);
+    await brew(b, alive);
     return alive();
   }
 
@@ -765,11 +730,19 @@ export async function createDrinkScene() {
       b.coffee.style.transform = '';
       return;
     }
+    step('bloom');
     anim(b.water, [{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(14px)' }], { duration: 300, fill: 'forwards' });
     const pour = sfx.voice('pour');
     pour.level(0.55);
     await settle(anim(b.stream, [{ opacity: 0, strokeDasharray: '0 200' }, { opacity: 0.9, strokeDasharray: '200 0' }], { duration: 500, easing: EASE.out }));
-    if (!alive()) return;
+    // Bloom : la mouture gonfle
+    setOrigin(b.grounds, '50% 100%');
+    await settle(anim(b.grounds, [{ transform: 'scale(1, 1)' }, { transform: 'scale(1.06, 1.7)' }, { transform: 'scale(1.03, 1.4)' }], { duration: 700, easing: EASE.out }));
+    if (!alive()) {
+      pour.stop();
+      return;
+    }
+    step('pour');
     const fill = anim(b.coffee, [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], { duration: 2200, easing: EASE.inOut });
     [150, 480, 820, 1150, 1500, 1850].forEach((ms, i) => sfx.play('plop', { v: 0.05 - i * 0.004, delay: ms }));
     const drips = [...b.drops.children].map((d, i) => anim(d, [
@@ -782,90 +755,6 @@ export async function createDrinkScene() {
     pour.stop();
     drips.forEach((d) => d && d.cancel());
     anim(b.stream, [{ opacity: 0.9 }, { opacity: 0 }], { duration: 300 });
-  }
-
-  // ------------------------------------------------------------ jus : les fruits plongent et éclatent
-  function burst(b, color) {
-    const r = rng(Math.floor(Math.random() * 1e6));
-    const y0 = -b.v.h - 8;
-    for (let i = 0; i < 11; i++) {
-      const d = s('circle', { cx: 0, cy: f2(y0), r: f2(1.6 + r() * 2.4), fill: i % 3 ? color : shade(color, 0.3) });
-      b.splashG.append(d);
-      const ang = -Math.PI / 2 + (r() - 0.5) * 2.4;
-      const dist = 18 + r() * 24;
-      const dx = Math.cos(ang) * dist;
-      const dy = Math.sin(ang) * dist;
-      const a = anim(d, [
-        { transform: 'translate(0px, 0px)', opacity: 1 },
-        { transform: `translate(${f2(dx)}px, ${f2(dy)}px)`, opacity: 1, offset: 0.45 },
-        { transform: `translate(${f2(dx * 0.4)}px, ${f2(30 + r() * 20)}px)`, opacity: 0 },
-      ], { duration: 620 + r() * 200, easing: 'cubic-bezier(.2,.7,.4,1)', fill: 'forwards' });
-      (a ? a.finished : Promise.resolve()).then(() => d.remove()).catch(() => d.remove());
-    }
-  }
-
-  async function dropFruit(b, el, pop, fid, from, alive) {
-    // Arc jusqu'au bord du verre, écrasement, éclatement
-    const color = JUICE_COLOR[fid] || '#F2A64A';
-    setOrigin(el, '50% 50%');
-    const mid = { x: from.x * 0.45, y: Math.min(from.y, -20) - 34 };
-    await settle(anim(el, [
-      { transform: `translate(${f2(from.x)}px, ${f2(from.y)}px) rotate(0deg)`, opacity: 1 },
-      { transform: `translate(${f2(mid.x)}px, ${f2(mid.y)}px) rotate(160deg)`, offset: 0.5 },
-      { transform: 'translate(0px, 0px) rotate(340deg)', opacity: 1 },
-    ], { duration: 560, easing: 'cubic-bezier(.45,0,.4,1)' }));
-    if (!alive()) return false;
-    sfx.play('plop', { v: 0.12 });
-    setOrigin(pop, '50% 50%');
-    await settle(anim(pop, [
-      { transform: 'scale(1, 1)', opacity: 1 },
-      { transform: 'scale(1.4, .55)', opacity: 1, offset: 0.55 },
-      { transform: 'scale(.15, .15)', opacity: 0 },
-    ], { duration: 300, easing: 'ease-in' }));
-    burst(b, color);
-    sfx.play('splash');
-    return alive();
-  }
-
-  async function assembleJuice(alive) {
-    const b = cur.build;
-    const list = [];
-    const vessel = b.parts.find((p) => p.vessel);
-    sfx.play('clink', { mat: 'glass', i: 0, v: 0.06, delay: 390 });
-    vessel.els.forEach((el) => {
-      setOrigin(el, '50% 100%');
-      list.push(anim(el, dockFrames(vessel), { duration: 560, easing: 'cubic-bezier(.5,0,.3,1)' }));
-    });
-    labels.querySelectorAll('.dk-label').forEach((L) => list.push(anim(L, [{ opacity: 1 }, { opacity: 0 }], { duration: 300 })));
-    list.push(anim(cur.wrap, [{ transform: drinkTransform(cur, true) }, { transform: drinkTransform(cur, false) }], { duration: 760, easing: EASE.inOut }));
-    await Promise.all(list.map((a) => settle(a)));
-    if (!alive()) return false;
-    const fruits = b.parts.filter((p) => p.fruit);
-    const colors = [];
-    for (let i = 0; i < fruits.length; i++) {
-      const p = fruits[i];
-      const ok = await dropFruit(b, p.els[0], p.pop, p.fid, p.off, alive);
-      if (!ok) return false;
-      colors.push(JUICE_COLOR[p.fid] || '#F2A64A');
-      b.liquid.tween(b.max * ((i + 1) / fruits.length), mixColors(colors), 520);
-      await pause(160);
-    }
-    if (b.garnish) {
-      const gp = b.parts.find((p) => p.garnish);
-      sfx.play('paper', { delay: 380 });
-      sfx.play('clink', { mat: 'glass', i: 3, v: 0.03, delay: 430 });
-      gp.els.forEach((el) => {
-        setOrigin(el, '50% 100%');
-        anim(el, [
-          { transform: `translate(${gp.off.x}px, ${gp.off.y}px) rotate(20deg)` },
-          { transform: 'translate(0px, 3px) rotate(-4deg)', offset: 0.7 },
-          { transform: 'translate(0px, 0px) rotate(0deg)' },
-        ], { duration: 620, easing: 'cubic-bezier(.4,0,.3,1)', fill: 'backwards' });
-      });
-      gp.els.forEach((el) => (el.style.transform = ''));
-      await pause(620);
-    }
-    return alive();
   }
 
   // ------------------------------------------------------------ latte art : bascule de caméra + versé
@@ -934,7 +823,7 @@ export async function createDrinkScene() {
   async function voila(style, alive) {
     const av = ensureAvatar();
     avatarLayer.setAttribute('opacity', 1);
-    av.bubbleText.textContent = style === 'swan' ? 'Et voilà, un cygne !' : 'Et voilà, un cœur !';
+    av.bubbleText.textContent = `Et voilà, ${ART_NAME[style] || 'un cœur'} !`;
     const tx = av.Ax - av.R - 16;
     av.bubbleText.setAttribute('x', tx);
     av.bubbleText.setAttribute('y', av.Ay + 6);
@@ -961,13 +850,34 @@ export async function createDrinkScene() {
     ]);
   }
 
-  let artStyle = 'heart';
+  /** Motif tiré au hasard, jamais deux fois le même d'affilée. */
+  const nextStyle = () => {
+    const pool = ART_STYLES.filter((x) => x !== artStyle);
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
+
+  /** Pose la garniture (latte art) avec le motif donné, en fondu. */
+  function showArt(b, style) {
+    const gp = b.parts.find((p) => p.kind === 'garnish');
+    if (!gp) return;
+    b.art.setStyle(style);
+    gp.els.forEach((el) => {
+      el.getAnimations().forEach((a) => a.cancel());
+      el.style.transform = '';
+      el.style.opacity = '';
+      anim(el, [{ opacity: 0 }, { opacity: 1 }], { duration: 300, fill: 'none' });
+    });
+  }
+
   async function latteSequence(alive) {
     const b = cur.build;
-    if (!b.art || cur.iced || isReduced()) {
-      b.art?.setStyle(artStyle);
+    if (!b.art || cur.iced) return true;
+    artStyle = nextStyle();
+    if (isReduced()) {
+      showArt(b, artStyle);
       return true;
     }
+    step('art');
     onChange({ phase: 'latte' });
     await tilt(true);
     if (!alive()) return false;
@@ -975,9 +885,8 @@ export async function createDrinkScene() {
     if (!ok || !alive()) return false;
     await voila(artStyle, alive);
     if (!alive()) return false;
-    b.art.setStyle(artStyle);
+    showArt(b, artStyle);
     await tilt(false);
-    onChange({ phase: 'done' });
     return alive();
   }
 
@@ -996,14 +905,6 @@ export async function createDrinkScene() {
           { transform: 'translate(3px, -16px) scale(.9, 1.15)', opacity: 0 },
         ], { duration: 2600, delay: i * 720, iterations: Infinity, easing: 'ease-in-out', fill: 'none' }));
       });
-    }
-    if (b.juice && b.liquid.state.level > 2) {
-      b.bubbles.setAttribute('opacity', 1);
-      [...b.bubbles.children].forEach((c, i) => idleAnims.push(anim(c, [
-        { transform: 'translateY(0)', opacity: 0 },
-        { transform: 'translateY(-10px)', opacity: 0.8, offset: 0.3 },
-        { transform: 'translateY(-34px)', opacity: 0 },
-      ], { duration: 2200 + i * 180, delay: i * 260, iterations: Infinity, easing: 'ease-out', fill: 'none' })));
     }
     const ice = b.root.querySelector('.dk-ice');
     if (ice && !exploded) {
@@ -1027,29 +928,23 @@ export async function createDrinkScene() {
     return sc;
   }
 
-  async function show(id, { iced = false, style } = {}) {
+  /** Tout est posé, sans animation (mouvement réduit ou bascule). */
+  function settleAll(build) {
+    setPartsExploded(build, false);
+    cur.wrap.style.transform = drinkTransform(cur, false);
+    labels.querySelectorAll('.dk-label').forEach((L) => (L.style.opacity = '0'));
+    if (build.v60) build.coffee.style.transform = '';
+    if (build.art) build.art.setStyle(artStyle);
+  }
+
+  async function show(id, { iced = false } = {}) {
     const alive = begin();
-    if (style) artStyle = style;
     hardStop();
     const def = DRINKS[id];
     if (!def) return;
-    let build;
-    if (def.special === 'v60') build = buildV60(iced);
-    else if (def.juice && def.seasonal) build = buildJuice(def, [], { composer: true });
-    else if (def.juice) build = buildJuice(def, def.fruits);
-    else build = buildCup(def, iced, artStyle);
+    const build = def.special === 'v60' ? buildV60(iced) : buildCup(def, iced, artStyle);
     const sc = mount(build, def, id, iced);
     const icedOn = iced && (def.icedVersion || def.iced);
-    if (build.composer) {
-      composer.list = [];
-      cur.wrap.style.transform = drinkTransform(cur, false);
-      labels.replaceChildren();
-      composer.refresh();
-      anim(cur.wrap, [{ opacity: 0, transform: `${drinkTransform(cur, false)} translateY(20px)` }, { opacity: 1, transform: drinkTransform(cur, false) }], { duration: 420, easing: EASE.back, fill: 'none' });
-      exploded = false;
-      onChange({ phase: 'composer' });
-      return;
-    }
     title.textContent = def.name + (icedOn ? ' glacé' : '');
     price.textContent = def.price;
     buildLabels(build, sc.e);
@@ -1059,12 +954,7 @@ export async function createDrinkScene() {
     exploded = true;
     onChange({ phase: 'exploded' });
     if (isReduced()) {
-      setPartsExploded(build, false);
-      cur.wrap.style.transform = drinkTransform(cur, false);
-      labels.querySelectorAll('.dk-label').forEach((L) => (L.style.opacity = '0'));
-      if (build.juice) build.liquid.set(build.max, mixColors(build.fruitsList.map((f) => JUICE_COLOR[f.id] || '#F2A64A')));
-      if (build.v60) build.coffee.style.transform = '';
-      build.fruitEls?.forEach((el) => (el.style.opacity = '0'));
+      settleAll(build);
       exploded = false;
       onChange({ phase: 'done' });
       return;
@@ -1082,66 +972,14 @@ export async function createDrinkScene() {
       stopIdle();
       await latteSequence(alive);
     }
-    if (alive()) startIdle();
+    if (!alive()) return;
+    onChange({ phase: 'done' });
+    startIdle();
   }
-
-  // ------------------------------------------------------------ composeur de jus
-  const composer = {
-    list: [],
-    color() {
-      return mixColors(this.list.map((f) => JUICE_COLOR[f] || '#F2A64A'));
-    },
-    refresh() {
-      const name = juiceName(this.list, this.color());
-      title.textContent = name;
-      price.textContent = this.list.length ? `${this.list.map((f) => JUICE_LABEL[f]).join(' · ')} — 4 €` : `2 à ${COMPOSER_MAX} ingrédients · 4 €`;
-      onChange({ phase: 'composer', list: [...this.list], name });
-    },
-    /** Ajoute un fruit qui arrive depuis le bouton touché (coordonnées écran). */
-    async add(fid, fromRect) {
-      if (!cur?.build.composer || this.list.includes(fid) || this.list.length >= COMPOSER_MAX) return;
-      const b = cur.build;
-      this.list.push(fid);
-      this.refresh();
-      // Point de départ : le bouton, converti dans le repère du verre
-      let from = { x: 120, y: 60 };
-      const ctm = svg.getScreenCTM();
-      if (fromRect && ctm) {
-        const pt = new DOMPoint(fromRect.left + fromRect.width / 2, fromRect.top + fromRect.height / 2).matrixTransform(ctm.inverse());
-        from = { x: (pt.x - X_ASSEMBLED) / cur.scaleA, y: (pt.y - BASE_Y) / cur.scaleA + b.v.h + 8 };
-      }
-      const el = g({ class: 'dk-fruit' });
-      const pop = g({ class: 'dk-pop' });
-      pop.append(g({ transform: `translate(0 ${f2(-b.v.h - 8)}) scale(1.75)` }, drawProduce(fid, 7 + this.list.length)));
-      el.append(pop);
-      b.root.append(el);
-      const alive = () => cur?.build === b;
-      await dropFruit(b, el, pop, fid, from, alive);
-      el.remove();
-      if (!alive()) return;
-      await b.liquid.tween(b.max * Math.min(1, this.list.length / COMPOSER_MAX), this.color(), 560);
-      startIdle();
-    },
-    async remove(fid) {
-      if (!cur?.build.composer) return;
-      this.list = this.list.filter((f) => f !== fid);
-      this.refresh();
-      await cur.build.liquid.tween(cur.build.max * Math.min(1, this.list.length / COMPOSER_MAX), this.list.length ? this.color() : cur.build.liquid.state.color, 520);
-      startIdle();
-    },
-    async reset() {
-      if (!cur?.build.composer) return;
-      this.list = [];
-      this.refresh();
-      stopIdle();
-      await cur.build.liquid.tween(0, cur.build.liquid.state.color, 700);
-    },
-  };
 
   return {
     svg,
     show,
-    composer,
     get current() {
       return cur && cur.id;
     },
@@ -1154,36 +992,23 @@ export async function createDrinkScene() {
     onChange(fn) {
       onChange = fn;
     },
-    /** Vue éclatée ↔ assemblée (sans relancer le latte art). */
+    /** Vue éclatée ↔ boisson préparée (le procédé se rejoue, sans le latte art). */
     async toggle() {
-      if (!cur || cur.build.composer) return;
+      if (!cur) return;
       const alive = begin();
       hardStop();
       if (exploded) {
         await assemble(alive);
         if (alive()) {
-          cur.build.art?.setStyle(artStyle);
+          if (cur.build.art) showArt(cur.build, artStyle);
+          onChange({ phase: 'done' });
           startIdle();
         }
       } else {
         cur.wrap.style.opacity = '';
         await explode(alive);
+        onChange({ phase: 'exploded' });
       }
-      onChange({ phase: exploded ? 'exploded' : 'done' });
-    },
-    /** Change le motif et rejoue le versé. */
-    async setArt(style) {
-      artStyle = style;
-      if (!cur?.build.art || cur.iced) return;
-      const alive = begin();
-      hardStop();
-      if (exploded) {
-        await assemble(alive);
-        if (!alive()) return;
-      }
-      cur.wrap.style.opacity = '';
-      await latteSequence(alive);
-      if (alive()) startIdle();
     },
     pause() {
       idleAnims.forEach((a) => a && a.pause());

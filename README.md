@@ -4,9 +4,9 @@ Site vitrine « monobloc » pensé comme une petite appli mobile pour **Café La
 
 - **Ouverture** : le logo s'assemble en grand au centre ; « Entrer » lance le **jingle** (le logo danse sur les notes et tamponne), puis il rétrécit jusqu'à sa place sur la devanture pendant que la boutique se construit, avec ses **petits bruits de chantier**. Une fois par visite ; `?intro` dans l'adresse le rejoue.
 - **Accueil** : la boutique reproduite en SVG animé (devanture, enseigne, vitrine éclairée, étal garni des fruits du mois, ardoise, le primeur devant la porte), le **tampon** qui s'assemble et la **typo rubanée** qui défile.
-- **Comptoir** : la carte façon lettres murales ; chaque boisson apparaît **en vue éclatée** (expresso, lait, mousse, glaçons, fruits…) puis **s'assemble** dans la tasse. Pour les cafés au lait, la caméra passe au-dessus de la tasse et **ses mains versent le latte art** (cœur à couches ou cygne), avant son clin d'œil « Et voilà ! ». Version glacée, V60 qui coule, jus dont les fruits éclatent dans le verre, et **composeur de jus « sur demande »** avec les ingrédients de saison.
-- **Étals** : l'intérieur de la boutique (briques, mur vert, vins, épicerie) avec 9 cagettes qui suivent **le mois choisi** ; toucher une cagette ouvre la fiche du produit.
-- **Le primeur** : son portrait illustré et animé (respiration, clignement, salut, bulles de saison), bascule vers la vraie photo.
+- **Café** : la carte des cafés de spécialité façon lettres murales ; chaque boisson apparaît **en vue éclatée** (expresso, lait, mousse, glaçons…) puis **se prépare étape par étape** : grains moulus dans le porte-filtre, tassage, extraction sous la tête de groupe, lait versé au pichet. Le **procédé** s'affiche dessous et suit l'animation. Pour les cafés au lait, la caméra passe au-dessus de la tasse et **les mains de Vincent versent un latte art tiré au hasard** (cœur, cygne, tulipe ou rosette), avant son clin d'œil « Et voilà ! ». Versions glacées, V60 (rinçage, mouture, bloom, versements).
+- **Étals** : l'intérieur de la boutique (briques, mur vert, vins, épicerie) avec 9 cagettes qui suivent **le mois choisi** ; toucher une cagette ouvre la fiche du produit. Dessous, les **paniers de saison à prix fixe** (duo, famille, gourmand) composés avec les produits du mois, avec des **idées de plats**.
+- **Bar à jus** : en haut, **Vincent derrière son comptoir** presse les jus (le bras suit l'extracteur, le verre se remplit de la bonne couleur) ; en bas, **« Compose ton jus »** : 3, 5 ou 7 ingrédients parmi une quarantaine (fruits, légumes, aromates, épices), chacun avec ses **bienfaits** (allégations nutritionnelles autorisées), profil de goût, nom du jus, ticket à montrer au comptoir, et les classiques. Bascule vers la vraie photo de Vincent.
 - **Fidélité** : carte à 10 tampons dans le téléphone, validée par le **code du primeur**, installable comme une appli (PWA, fonctionne hors connexion).
 - **Petits sons** sur tout ce qui se touche (bulles des onglets, toc de la pancarte, tintements de la tasse qui s'assemble, filet de lait, plouf des fruits, xylophone des mois, « tchac » du tampon, murmure du primeur quand il parle…). Synthétisés dans le navigateur, sans fichier audio ; bouton haut-parleur en haut pour les couper. Sur iPhone, ils suivent le mode silencieux.
 
@@ -61,7 +61,9 @@ Puis publier. Penser aussi à compléter `mentions-legales.html` (passages surli
 | Quoi | Où |
 | --- | --- |
 | Horaires, fermetures exceptionnelles, téléphone | `assets/js/config.js` **et** `index.html` (tableau + JSON-LD) **et** `llms.txt` |
-| Carte et prix du comptoir | `assets/js/data/drinks.js` **et** `index.html` (liste + JSON-LD) **et** `llms.txt` |
+| Carte et prix du café | `assets/js/data/drinks.js` **et** `index.html` (liste + JSON-LD) **et** `llms.txt` |
+| Bar à jus : ingrédients, bienfaits, prix 3/5/7, classiques | `assets/js/data/juicebar.js` **et** `index.html` (boutons de prix + JSON-LD) **et** `llms.txt` |
+| Paniers de saison : formats, prix, quantités, idées de plats | `assets/js/data/baskets.js` **et** `llms.txt` |
 | Calendrier des saisons | `assets/js/data/season.js`, puis `node tools/gen-season.mjs` pour régénérer le tableau HTML |
 | Règles de la carte fidélité (10 tampons, 5 max par passage) | `assets/js/config.js` (`LOYALTY`) |
 | Icônes, favicon, image de partage | `python tools/render-assets.py` et `node tools/make-favicon.mjs` (Chrome requis) |
@@ -69,15 +71,9 @@ Puis publier. Penser aussi à compléter `mentions-legales.html` (passages surli
 
 Les fermetures (congés) s'ajoutent dans `SHOP.closures` : le statut « Ouvert / Fermé » et le panneau de la porte suivent automatiquement, à l'heure de Paris.
 
-### Ajouter le prénom du primeur (recommandé pour le référencement)
+### Bienfaits des jus : règle à respecter
 
-Dans le JSON-LD de `index.html`, ajouter dans l'objet `GroceryStore` :
-
-```json
-"founder": { "@type": "Person", "name": "Prénom Nom", "jobTitle": "Primeur et barista", "image": "https://maliciousmusic.github.io/cafe-laitue/assets/img/primeur-portrait-1080.webp" }
-```
-
-…et le citer dans le texte de l'onglet « Le primeur » et dans `llms.txt`.
+Les textes de bienfaits du bar à jus suivent le règlement européen sur les allégations de santé (CE 1924/2006) : un nutriment n'est cité que si l'ingrédient en apporte au moins 15 % des apports de référence pour 100 g, avec la formulation autorisée (« contribue à… »), et la mention sur l'alimentation variée et équilibrée reste affichée. Ne pas ajouter d'allégation « détox », « brûle-graisse », « booste l'immunité » ou de promesse médicale.
 
 ## Référencement local, SEO & GEO (IA)
 
@@ -114,8 +110,8 @@ assets/css/app.css      assets/css/fonts.css (polices locales)
 assets/js/main.js       navigation, statut d'ouverture, feuilles, PWA
 assets/js/lib/          animation, SVG, bandeaux défilants, sons (sound.js)
 assets/js/config.js     données du commerce, règles fidélité
-assets/js/data/         saisons, carte du comptoir
-assets/js/scenes/       tampon, ruban, personnage, boutique, étagères, boissons, portrait
+assets/js/data/         saisons, carte du café, bar à jus, paniers
+assets/js/scenes/       tampon, ruban, personnage, boutique, étagères, verrerie, café, bar à jus, latte art
 assets/js/screens/      un module par onglet
 assets/img/  assets/icons/  assets/fonts/
 tools/                  serveur local, code commerçant, domaine, saisons, icônes, polices
