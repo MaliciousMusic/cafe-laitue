@@ -1,12 +1,16 @@
-// Carte de fidélité : tampons enregistrés sur l'appareil, validés par le code du primeur.
+// Carte de fidélité imprimée (une fiche avec un panier en osier) : le client la crée avec son
+// nom et son numéro de téléphone ; chaque passage est un vrai coup de tampon encreur, un légume
+// de couleur ; le 10e tampon, le logo, donne la boisson offerte. Tout reste sur l'appareil ;
+// les tampons sont validés par le code du primeur (6 chiffres).
 
 import { LOYALTY } from '../config.js';
 import { anim, EASE, isReduced, vibrate, wait } from '../lib/motion.js';
 import { play as sfx } from '../lib/sound.js';
-import { createStamp } from '../scenes/stamp.js';
-import { s, svgRoot } from '../lib/svg.js';
+import { createBasket } from '../scenes/basket.js';
+import { env, install } from '../features/install.js';
 
 const KEY = 'cafe-laitue.carte.v1';
+const PIN_LEN = 6;
 const LOCK = 'cafe-laitue.carte.lock';
 
 const store = {
@@ -27,23 +31,39 @@ const store = {
   },
 };
 
-const fresh = () => ({ v: 1, stamps: 0, total: 0, rewards: 0, name: '', history: [], created: new Date().toISOString() });
+const fresh = () => ({ v: 1, stamps: 0, total: 0, rewards: 0, name: '', phone: '', history: [], created: new Date().toISOString() });
+
+/** Numéro saisi → forme rangée (0612345678 ou +447911123456), ou null s'il est incomplet. */
+export function normPhone(v) {
+  let d = String(v || '').replace(/[\s.\-()/]/g, '');
+  if (/^00\d+$/.test(d)) d = `+${d.slice(2)}`;
+  if (/^\+330?\d{9}$/.test(d)) d = `0${d.slice(-9)}`;
+  if (/^0[1-9]\d{8}$/.test(d)) return d;
+  if (/^\+[1-9]\d{7,14}$/.test(d) && !d.startsWith('+33')) return d;
+  return null;
+}
+/** 06 12 34 56 78 */
+const spaced = (d) => (/^0\d{9}$/.test(d) ? d.match(/\d\d/g).join(' ') : d);
+/** Sur la carte, le numéro est en partie masqué : 06 •• •• •• 78. */
+const masked = (d) => (/^0\d{9}$/.test(d) ? `${d.slice(0, 2)} •• •• •• ${d.slice(-2)}` : d ? `${d.slice(0, 4)} •• •• ${d.slice(-2)}` : '');
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-const CUP_ICON = '<svg class="slot-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 10h12v4a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z"/><path d="M16.5 11h1.3a2.4 2.4 0 0 1 0 4.8h-1.8"/><path d="M8.3 3.5c-.9 1 .9 2 0 3.3M12.3 3.5c-.9 1 .9 2 0 3.3"/></svg>';
-const GIFT_ICON = '<svg class="slot-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="9" width="17" height="11" rx="2"/><path d="M12 9v11M3.5 13h17M12 9C10 5 6.5 5.5 7 7.5S12 9 12 9zM12 9c2-4 5.5-3.5 5-1.5S12 9 12 9z"/></svg>';
-
 export default function loyalty(el) {
   const $ = (q) => el.querySelector(q);
   const card = $('#lcard');
-  const slotsEl = $('#slots');
-  const countEl = $('#lcard-count');
+  const basketBox = $('#lbasket');
   const footEl = $('#lcard-foot');
-  const nameEl = $('#lcard-name');
+  const editBtn = $('#lcard-edit');
+  const form = $('#lform');
+  const inName = $('#lf-name');
+  const inTel = $('#lf-tel');
+  const errEl = $('#lf-error');
+  const cancelBtn = $('#lf-cancel');
+  const actions = $('#lactions');
   const btnStamp = $('#btn-stamp');
   const btnReward = $('#btn-reward');
   const btnInstall = $('#btn-install');
@@ -62,65 +82,36 @@ export default function loyalty(el) {
   let code = '';
   let qty = 1;
   let unlocked = false;
+  let editing = false;
 
-  // Filtre « encre » partagé
-  const defs = svgRoot('0 0 1 1', { width: 0, height: 0, style: 'position:absolute' });
-  defs.append(s('defs', {}, s('filter', { id: 'ink-rough', x: '-10%', y: '-10%', width: '120%', height: '120%' }, [
-    s('feTurbulence', { type: 'fractalNoise', baseFrequency: 0.55, numOctaves: 2, seed: 3, result: 'n' }),
-    s('feDisplacementMap', { in: 'SourceGraphic', in2: 'n', scale: 1.8, xChannelSelector: 'R', yChannelSelector: 'G', result: 'd' }),
-    s('feTurbulence', { type: 'fractalNoise', baseFrequency: 1.6, numOctaves: 1, seed: 8, result: 'speck' }),
-    s('feColorMatrix', { in: 'speck', type: 'matrix', values: '0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.2 1.6', result: 'holes' }),
-    s('feComposite', { in: 'd', in2: 'holes', operator: 'in' }),
-  ])));
-  el.append(defs);
-
-  // Cases
-  const slots = Array.from({ length: goal }, (_, i) => {
-    const li = document.createElement('li');
-    li.className = `slot${i === goal - 1 ? ' is-gift' : ''}`;
-    li.innerHTML = i === goal - 1 ? GIFT_ICON : CUP_ICON;
-    li.setAttribute('aria-label', i === goal - 1 ? `Case ${goal} : boisson offerte` : `Case ${i + 1}`);
-    slotsEl.append(li);
-    return li;
-  });
-
-  createStamp().then((st) => $('#lcard-mark').append(st.svg));
+  // La carte (les légumes tamponnés dans le panier)
+  const basket = createBasket();
+  basketBox.prepend(basket.svg);
+  basketBox.setAttribute('role', 'img');
+  basket.ready.then(() => render());
 
   const save = () => store.set(KEY, state);
+  const hasCard = () => Boolean(state.name && state.phone);
+  const firstName = () => (state.name || '').split(' ')[0];
 
-  async function inkInto(slot, i, animate) {
-    if (slot.querySelector('.slot-ink')) return;
-    const st = await createStamp({ ink: true, disc: false });
-    const wrap = document.createElement('span');
-    wrap.className = 'slot-ink';
-    const rot = ((i * 47) % 50) - 25;
-    wrap.style.transform = `rotate(${rot}deg)`;
-    st.svg.style.filter = 'url(#ink-rough)';
-    wrap.append(st.svg);
-    slot.append(wrap);
-    slot.setAttribute('aria-label', `Case ${i + 1} : tamponnée`);
-    if (animate && !isReduced()) {
-      anim(wrap, [
-        { transform: `rotate(${rot}deg) scale(1.35)`, opacity: 0 },
-        { transform: `rotate(${rot}deg) scale(.94)`, opacity: 1, offset: 0.6 },
-        { transform: `rotate(${rot}deg) scale(1)`, opacity: 0.9 },
-      ], { duration: 360, easing: EASE.out, fill: 'none' });
-    }
-  }
-
-  function render() {
+  function render({ owner = true } = {}) {
     const shown = Math.min(state.stamps, goal);
-    countEl.textContent = String(shown);
-    slots.forEach((slot, i) => {
-      if (i < shown) inkInto(slot, i, false);
-      else {
-        slot.querySelector('.slot-ink')?.remove();
-        slot.setAttribute('aria-label', i === goal - 1 ? `Case ${goal} : boisson offerte` : `Case ${i + 1}`);
-      }
-    });
+    basket.setCount(shown);
+    for (let i = 0; i < goal; i++) {
+      if (i < shown) basket.put(i);
+      else basket.remove(i);
+    }
+    if (owner) basket.setOwner(state.name, masked(state.phone));
+    basketBox.setAttribute('aria-label', `Carte fidélité${state.name ? ` de ${state.name}` : ''} : ${shown} légume${shown > 1 ? 's' : ''} tamponné${shown > 1 ? 's' : ''} sur ${goal}`);
     const full = state.stamps >= goal;
     card.classList.toggle('is-full', full);
     btnReward.disabled = !full;
+    // carte à créer : le formulaire remplace les boutons du primeur
+    const ok = hasCard();
+    if (!ok && form.hidden) showForm('create');
+    if (ok && !editing) form.hidden = true;
+    actions.hidden = !ok || editing;
+    editBtn.hidden = !ok || editing;
     const last = state.history.filter((h) => h.k === 'stamp').pop();
     const lastTxt = last ? ` · dernier tampon le ${new Date(last.t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}` : '';
     let txt;
@@ -132,18 +123,90 @@ export default function loyalty(el) {
       txt = `Encore ${left} boisson${left > 1 ? 's' : ''} avant la prochaine offerte${lastTxt}.`;
     }
     if (state.rewards) txt += ` ${state.rewards} boisson${state.rewards > 1 ? 's' : ''} offerte${state.rewards > 1 ? 's' : ''} jusqu’ici.`;
+    if (!ok && !state.stamps) txt = 'Votre carte vous attend : écrivez-y votre nom et votre numéro.';
     footEl.textContent = txt;
-    if (nameEl.value !== state.name) nameEl.value = state.name || '';
   }
 
-  // Prénom
-  let nameTimer = 0;
-  nameEl.addEventListener('input', () => {
-    clearTimeout(nameTimer);
-    nameTimer = setTimeout(() => {
-      state.name = nameEl.value.trim().slice(0, 24);
-      save();
-    }, 300);
+  // ---------------------------------------------------------------- Créer / modifier la carte
+  function setError(msg, input) {
+    errEl.textContent = msg || '';
+    errEl.hidden = !msg;
+    if (input) {
+      input.setAttribute('aria-invalid', 'true');
+      input.focus();
+    }
+  }
+
+  function showForm(mode) {
+    editing = mode === 'edit';
+    $('#lform-title').textContent = editing ? 'Modifier ma carte' : 'Créez votre carte';
+    $('#lform-text').textContent = editing
+      ? 'Votre nom et votre numéro restent sur ce téléphone.'
+      : 'Il suffit de votre nom et de votre numéro de téléphone : ils s’inscrivent sur la carte et restent sur ce téléphone.';
+    $('#lf-submit-text').textContent = editing ? 'Enregistrer' : 'Créer ma carte';
+    cancelBtn.hidden = !editing;
+    inName.value = state.name || '';
+    inTel.value = state.phone ? spaced(state.phone) : '';
+    inName.removeAttribute('aria-invalid');
+    inTel.removeAttribute('aria-invalid');
+    setError(null);
+    form.hidden = false;
+    actions.hidden = true;
+    editBtn.hidden = true;
+  }
+
+  function closeForm() {
+    editing = false;
+    form.hidden = true;
+    render({ owner: false });
+  }
+
+  [inName, inTel].forEach((inp) => inp.addEventListener('input', () => {
+    inp.removeAttribute('aria-invalid');
+    if (!errEl.hidden) setError(null);
+  }));
+  // le numéro se range par paires une fois saisi
+  inTel.addEventListener('blur', () => {
+    const d = normPhone(inTel.value);
+    if (d) inTel.value = spaced(d);
+  });
+  inName.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      inTel.focus();
+    }
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = inName.value.replace(/\s+/g, ' ').trim().slice(0, 32);
+    const tel = normPhone(inTel.value);
+    if (!name) return setError('Indiquez votre nom.', inName);
+    if (!tel) return setError('Ce numéro semble incomplet (par exemple : 06 12 34 56 78).', inTel);
+    const isNew = !hasCard();
+    state.name = name;
+    state.phone = tel;
+    save();
+    inName.blur();
+    inTel.blur();
+    editing = false;
+    form.hidden = true;
+    sfx(isNew ? 'chime' : 'yes');
+    render({ owner: false });
+    if (!isReduced()) {
+      anim(actions, [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 200, easing: EASE.out, fill: 'backwards' });
+      basketBox.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    }
+    await basket.setOwner(name, masked(tel), { animate: !isReduced() });
+  });
+  cancelBtn.addEventListener('click', () => {
+    sfx('down');
+    closeForm();
+  });
+  editBtn.addEventListener('click', () => {
+    sfx('open');
+    showForm('edit');
+    form.scrollIntoView?.({ block: 'nearest', behavior: isReduced() ? 'auto' : 'smooth' });
   });
 
   // ---------------------------------------------------------------- Code commerçant
@@ -212,7 +275,7 @@ export default function loyalty(el) {
       qtyOut.textContent = String(qty);
       confirmBtn.textContent = 'Tamponner';
     } else {
-      hint.textContent = `Offrir la boisson à ${state.name || 'ce client'} ?`;
+      hint.textContent = `Offrir la boisson à ${firstName() || 'ce client'} ?`;
       confirmBtn.textContent = 'Valider la boisson offerte';
     }
     confirmBtn.hidden = false;
@@ -223,9 +286,9 @@ export default function loyalty(el) {
     if (unlocked) return;
     sfx(k === 'del' ? 'erase' : 'key');
     if (k === 'del') code = code.slice(0, -1);
-    else if (/^\d$/.test(k) && code.length < 4) code += k;
+    else if (/^\d$/.test(k) && code.length < PIN_LEN) code += k;
     setDots();
-    if (code.length === 4) setTimeout(checkCode, 120);
+    if (code.length === PIN_LEN) setTimeout(checkCode, 120);
   }
 
   keypad.addEventListener('click', (e) => {
@@ -260,32 +323,42 @@ export default function loyalty(el) {
   btnReward.addEventListener('click', () => openPin('reward'));
 
   // ---------------------------------------------------------------- Animations
-  async function flyStamp(slot) {
-    const r = slot.getBoundingClientRect();
-    const size = r.width * 1.9;
-    const fly = document.createElement('div');
-    fly.className = 'stamp-fly';
-    Object.assign(fly.style, { left: `${r.left + r.width / 2 - size / 2}px`, top: `${r.top + r.height / 2 - size / 2}px`, width: `${size}px`, height: `${size}px` });
-    const st = await createStamp({ ink: false });
-    fly.append(st.svg);
-    document.body.append(fly);
-    sfx('fly');
-    if (!isReduced()) {
-      await anim(fly, [
-        { transform: 'translateY(-160px) rotate(-18deg) scale(1.3)', opacity: 0 },
-        { transform: 'translateY(-40px) rotate(-6deg) scale(1.15)', opacity: 1, offset: 0.55 },
-        { transform: 'translateY(0) rotate(0) scale(.9)', opacity: 1 },
-      ], { duration: 420, easing: EASE.in, fill: 'forwards' })?.finished.catch(() => {});
+  /** Coup de tampon : le tampon en bois descend, presse, remonte ; l'encre reste sur le papier. */
+  async function stampAt(i) {
+    if (isReduced()) {
+      basket.put(i);
+      sfx('stamp');
+      return;
     }
+    const { body, shadow } = basket.toolAt(i);
+    body.style.transformBox = 'fill-box';
+    body.style.transformOrigin = '50% 100%';
+    shadow.style.transformBox = 'fill-box';
+    shadow.style.transformOrigin = '50% 50%';
+    basket.tool.setAttribute('opacity', 1);
+    sfx('fly');
+    const down = anim(body, [
+      { transform: 'translateY(-150px) rotate(-10deg)', opacity: 0 },
+      { transform: 'translateY(-46px) rotate(-3deg)', opacity: 1, offset: 0.6 },
+      { transform: 'translateY(0px) rotate(0deg)', opacity: 1 },
+    ], { duration: 360, easing: EASE.in, fill: 'forwards' });
+    anim(shadow, [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 360, easing: EASE.in, fill: 'forwards' });
+    await down?.finished.catch(() => {});
+    // la gomme s'écrase, l'encre se dépose
     sfx('stamp');
     vibrate(25);
-    anim(card, [{ transform: 'translateY(0)' }, { transform: 'translateY(3px)' }, { transform: 'translateY(0)' }], { duration: 180, fill: 'none' });
-    const up = anim(fly, [
-      { transform: 'translateY(0) scale(.9)', opacity: 1 },
-      { transform: 'translateY(-70px) scale(1.05)', opacity: 0 },
-    ], { duration: 320, easing: EASE.out, fill: 'forwards' });
-    up?.finished.then(() => fly.remove()).catch(() => fly.remove());
-    if (!up) fly.remove();
+    const st = basket.put(i);
+    anim(st.outer, [{ opacity: 0 }, { opacity: 1 }], { duration: 90, fill: 'none' });
+    anim(body, [{ transform: 'translateY(0px) scaleY(1)' }, { transform: 'translateY(1.5px) scaleY(.93)' }, { transform: 'translateY(0px) scaleY(1)' }], { duration: 170, fill: 'none' });
+    anim(basketBox, [{ transform: 'translateY(0)' }, { transform: 'translateY(2px)' }, { transform: 'translateY(0)' }], { duration: 170, fill: 'none' });
+    await wait(170);
+    const up = anim(body, [
+      { transform: 'translateY(0px) rotate(0deg)', opacity: 1 },
+      { transform: 'translateY(-110px) rotate(8deg)', opacity: 0 },
+    ], { duration: 380, easing: EASE.out, fill: 'forwards' });
+    anim(shadow, [{ opacity: 1 }, { opacity: 0 }], { duration: 260, fill: 'forwards' });
+    await up?.finished.catch(() => {});
+    basket.tool.setAttribute('opacity', 0);
   }
 
   async function addStamps(n) {
@@ -296,11 +369,8 @@ export default function loyalty(el) {
       state.history.push({ t: new Date().toISOString(), k: 'stamp' });
       state.history = state.history.slice(-60);
       save();
-      if (i < goal) {
-        await flyStamp(slots[i]);
-        await inkInto(slots[i], i, true);
-      }
-      countEl.textContent = String(Math.min(state.stamps, goal));
+      if (i < goal) await stampAt(i);
+      basket.setCount(Math.min(state.stamps, goal));
       await wait(120);
     }
     render();
@@ -314,15 +384,19 @@ export default function loyalty(el) {
     state.history.push({ t: new Date().toISOString(), k: 'reward' });
     save();
     celebrate('Boisson offerte !');
-    slots.forEach((slot, i) => {
-      const ink = slot.querySelector('.slot-ink');
-      if (ink && !isReduced()) {
-        anim(ink, [{ opacity: 0.9, transform: `${ink.style.transform} scale(1)` }, { opacity: 0, transform: `${ink.style.transform} scale(.4)` }], { duration: 380, delay: i * 50, fill: 'forwards' });
-      }
-    });
-    await wait(isReduced() ? 0 : 900);
-    slots.forEach((slot) => slot.querySelector('.slot-ink')?.remove());
-    render();
+    // la carte se retourne : une carte neuve, sans tampon
+    if (!isReduced()) {
+      const flip = anim(basketBox, [{ transform: 'perspective(900px) rotateY(0deg)' }, { transform: 'perspective(900px) rotateY(90deg)' }], { duration: 380, delay: 900, easing: EASE.in, fill: 'forwards' });
+      sfx('swoosh', { delay: 900 });
+      await flip?.finished.catch(() => {});
+      for (let i = 0; i < goal; i++) basket.remove(i);
+      render({ owner: false });
+      flip?.cancel();
+      anim(basketBox, [{ transform: 'perspective(900px) rotateY(-90deg)' }, { transform: 'perspective(900px) rotateY(0deg)' }], { duration: 440, easing: EASE.out, fill: 'none' });
+    } else {
+      for (let i = 0; i < goal; i++) basket.remove(i);
+      render();
+    }
   }
 
   function celebrate(title) {
@@ -365,36 +439,20 @@ export default function loyalty(el) {
   }
 
   // ---------------------------------------------------------------- Installation (PWA)
-  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  function refreshInstall() {
-    if (standalone) {
-      btnInstall.hidden = true;
-      note.textContent = 'Appli installée. Vos tampons restent sur ce téléphone.';
-      return;
-    }
-    if (window.__installPrompt) {
-      btnInstall.hidden = false;
-    } else if (ios) {
-      btnInstall.hidden = true;
-      note.innerHTML = 'Sur iPhone : touchez <strong>Partager</strong> puis <strong>« Sur l’écran d’accueil »</strong> pour garder votre carte à portée de main.';
-    }
-  }
-  document.addEventListener('cl:installable', refreshInstall);
-  btnInstall.addEventListener('click', async () => {
-    const p = window.__installPrompt;
-    if (!p) return;
-    p.prompt();
-    await p.userChoice.catch(() => {});
-    window.__installPrompt = null;
+  if (env.standalone) {
     btnInstall.hidden = true;
-  });
-  refreshInstall();
+    note.textContent = 'Appli installée. Votre nom, votre numéro et vos tampons restent sur ce téléphone.';
+  } else {
+    btnInstall.hidden = false;
+    note.textContent = 'Gratuit. Ajoutez l’appli à votre écran d’accueil pour garder votre carte à portée de main ; votre nom, votre numéro et vos tampons restent sur ce téléphone.';
+    btnInstall.addEventListener('click', () => install());
+  }
 
   // Synchronise si la carte change dans un autre onglet
   window.addEventListener('storage', (e) => {
     if (e.key === KEY) {
       state = { ...fresh(), ...store.get(KEY, {}) };
+      if (hasCard() && !editing) form.hidden = true;
       render();
     }
   });
@@ -403,9 +461,15 @@ export default function loyalty(el) {
 
   return {
     enter() {
-      render();
+      render({ owner: false });
       if (!isReduced()) {
-        anim(card, [{ transform: 'translateY(18px) rotate(-1.5deg)', opacity: 0 }, { transform: 'translateY(0) rotate(0)', opacity: 1 }], { duration: 520, easing: EASE.back, fill: 'none' });
+        basketBox.style.transformOrigin = '50% 8%';
+        anim(basketBox, [
+          { transform: 'translateY(-14px) rotate(-4deg)', opacity: 0 },
+          { transform: 'translateY(0) rotate(2.4deg)', opacity: 1, offset: 0.45 },
+          { transform: 'rotate(-1.2deg)', offset: 0.75 },
+          { transform: 'rotate(0deg)' },
+        ], { duration: 900, easing: 'ease-out', fill: 'none' });
       }
     },
     leave() {},

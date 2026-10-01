@@ -234,7 +234,7 @@
           { "@type": "Question", "name": "Proposez-vous des paniers de fruits et légumes ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, des paniers de saison à prix fixe en trois formats (duo, famille, gourmand), composés avec les produits du moment et accompagnés d’idées de plats. Ils se réservent par téléphone au 04 73 92 16 42." } },
           { "@type": "Question", "name": "Peut-on consommer sur place ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, cafés et jus se dégustent en terrasse ou à emporter." } },
           { "@type": "Question", "name": "Café Laitue vend-il du pain ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, Café Laitue est dépôt de pain pour Atelier Bon, boulangerie de pain vivant : des pains de qualité proposés chaque jour." } },
-          { "@type": "Question", "name": "Comment fonctionne la carte de fidélité ?", "acceptedAnswer": { "@type": "Answer", "text": "La carte de fidélité est gratuite et sans inscription, directement dans l’appli du site. À chaque boisson, le primeur tamponne votre carte sur votre téléphone ; au 10e tampon, une boisson est offerte." } }
+          { "@type": "Question", "name": "Comment fonctionne la carte de fidélité ?", "acceptedAnswer": { "@type": "Answer", "text": "La carte de fidélité est gratuite, directement dans l’appli du site : pour la créer, il suffit de son nom et de son numéro de téléphone, qui restent sur le téléphone. À chaque boisson, le primeur tamponne votre carte ; au 10e tampon, une boisson est offerte." } }
         ]
       }
     ]
@@ -245,11 +245,24 @@
 <body>
   <a class="skip" href="#main">Aller au contenu</a>
   <div class="backdrop" id="backdrop" aria-hidden="true"></div>
+  <aside class="desk-install" aria-labelledby="t-desk-install">
+    <p class="desk-install-eyebrow">Sur votre téléphone</p>
+    <h2 id="t-desk-install">Emportez Café Laitue dans votre poche</h2>
+    <div class="desk-qr" id="desk-qr"></div>
+    <ol class="desk-steps">
+      <li><strong>Scannez</strong> ce code avec l’appareil photo de votre téléphone.</li>
+      <li><strong>Ajoutez</strong> l’appli à l’écran d’accueil : sur iPhone, touchez <strong>Partager</strong> puis «&nbsp;Sur l’écran d’accueil&nbsp;» ; sur Android, <strong>Installer l’appli</strong>.</li>
+      <li>Votre <strong>carte fidélité</strong>, les horaires et les jus du moment, même sans réseau.</li>
+    </ol>
+    <button class="btn desk-install-btn" id="desk-install-btn" type="button" hidden>Installer sur cet ordinateur</button>
+  </aside>
 
   <div class="app" id="app">
     <div class="splash" id="splash" role="dialog" aria-modal="true" aria-label="Bienvenue chez Café Laitue">
       <div class="splash-bg"></div>
+      <div class="splash-veg" id="splash-veg" aria-hidden="true"></div>
       <div class="splash-logo"><div class="splash-dance"></div></div>
+      <div class="splash-veg splash-veg--over" id="splash-veg-over" aria-hidden="true"></div>
       <div class="splash-actions">
         <button class="splash-enter is-sound" id="splash-enter" type="button" data-sfx="none">
           <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 9.5h3.2L11 5.8v12.4l-4.3-3.7H3.5z"/><path d="M14.6 9.2a4 4 0 0 1 0 5.6M17.3 6.6a7.6 7.6 0 0 1 0 10.8"/></svg>
@@ -278,7 +291,7 @@
         <span class="sign" aria-hidden="true">
           <svg class="sign-strings" viewBox="0 0 120 24"><path d="M60 5 23 23M60 5l37 18"/></svg>
           <span class="sign-board">
-            <span class="sign-face sign-open"><i class="sign-dot"></i><b>Ouvert</b><small id="sign-open-sub">Horaires</small></span>
+            <span class="sign-face sign-open"><b>Ouvert</b><small id="sign-open-sub">Horaires</small></span>
             <span class="sign-face sign-closed"><b>Fermé</b><small id="sign-closed-sub">à bientôt</small></span>
           </span>
           <span class="sign-nail"></span>
@@ -303,7 +316,7 @@
             <span class="h1-sub">votre primeur gourmet à Clermont-Ferrand</span>
           </h1>
           <p class="lead">Fruits &amp; légumes frais de saison, jus pressés minute, café de spécialité, épicerie fine et dépôt de pain.</p>
-          <div class="actions">
+          <div class="actions actions--2">
             <a class="btn btn--primary" href="https://www.google.com/maps/dir/?api=1&amp;destination=Caf%C3%A9%20Laitue%2C%2020%20rue%20Ballainvilliers%2C%2063000%20Clermont-Ferrand" target="_blank" rel="noopener">
               <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>
               Itinéraire
@@ -312,16 +325,7 @@
               <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5h2.6l1.4 4.2-2 1.4a12 12 0 0 0 6.3 6.3l1.4-2 4.2 1.4v2.6a2 2 0 0 1-2.2 2A17 17 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z"/></svg>
               Appeler
             </a>
-            <a class="btn" href="#fidelite">
-              <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="3"/><circle cx="9" cy="12" r="2.6"/><path d="M14.5 10.5h3.5M14.5 13.5h2.5"/></svg>
-              Ma carte
-            </a>
           </div>
-          <button class="today" id="today" type="button" aria-haspopup="dialog" aria-controls="infos">
-            <span class="today-label">Aujourd’hui</span>
-            <span class="today-hours" id="today-hours">Lun. 14h–19h30 · Mar.–sam. 8h–19h30</span>
-            <span class="today-more">Infos pratiques</span>
-          </button>
         </div>
       </section>
 
@@ -567,26 +571,36 @@
       <section class="screen screen--loyalty" id="fidelite" data-screen="fidelite" aria-labelledby="t-fidelite">
         <header class="screen-head">
           <p class="eyebrow">Carte fidélité</p>
-          <h2 id="t-fidelite">Dix tampons, une boisson offerte</h2>
+          <h2 id="t-fidelite">Dix légumes dans le panier, une boisson offerte</h2>
         </header>
 
         <div class="lcard" id="lcard">
-          <div class="lcard-top">
-            <span class="lcard-mark" id="lcard-mark" aria-hidden="true"></span>
-            <div class="lcard-id">
-              <p class="lcard-title">Carte fidélité</p>
-              <label class="lcard-name">
-                <span class="visually-hidden">Votre prénom</span>
-                <input id="lcard-name" type="text" autocomplete="given-name" maxlength="24" placeholder="Votre prénom" enterkeyhint="done">
-              </label>
-            </div>
-            <p class="lcard-count"><span id="lcard-count">0</span><small>/10</small></p>
-          </div>
-          <ol class="slots" id="slots" aria-label="Tampons obtenus"></ol>
-          <p class="lcard-foot" id="lcard-foot">Encore 10 boissons avant la prochaine offerte.</p>
+          <div class="lbasket" id="lbasket"></div>
+          <p class="lcard-foot"><span id="lcard-foot">Encore 10 boissons avant la prochaine offerte.</span> <button class="lcard-edit" id="lcard-edit" type="button" hidden>Modifier</button></p>
         </div>
 
-        <div class="actions actions--2">
+        <form class="lform" id="lform" novalidate hidden>
+          <p class="lform-title" id="lform-title">Créez votre carte</p>
+          <p class="lform-text" id="lform-text">Il suffit de votre nom et de votre numéro de téléphone : ils s’inscrivent sur la carte et restent sur ce téléphone.</p>
+          <label class="field">
+            <span class="field-label">Prénom et nom</span>
+            <input id="lf-name" name="name" type="text" autocomplete="name" autocapitalize="words" maxlength="32" required placeholder="Lucie Martin" enterkeyhint="next">
+          </label>
+          <label class="field">
+            <span class="field-label">Téléphone</span>
+            <input id="lf-tel" name="tel" type="tel" autocomplete="tel" inputmode="tel" maxlength="20" required placeholder="06 12 34 56 78" enterkeyhint="done">
+          </label>
+          <p class="lform-error" id="lf-error" role="alert" hidden></p>
+          <div class="lform-actions">
+            <button class="btn btn--primary btn--wide" type="submit" id="lf-submit">
+              <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 4.5l4 4L9 19H5v-4z"/><path d="M13 7l4 4"/></svg>
+              <span id="lf-submit-text">Créer ma carte</span>
+            </button>
+            <button class="btn" type="button" id="lf-cancel" hidden>Annuler</button>
+          </div>
+        </form>
+
+        <div class="actions actions--2" id="lactions">
           <button class="btn btn--primary" id="btn-stamp" type="button">
             <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.5h6l-1 6h3.5a2 2 0 0 1 2 2V14H4.5v-2.5a2 2 0 0 1 2-2H10z"/><path d="M4.5 17.5h15"/></svg>
             Faire tamponner
@@ -598,20 +612,30 @@
         </div>
 
         <ol class="steps">
-          <li><strong>Commandez</strong> un café ou un jus.</li>
-          <li><strong>Montrez</strong> cette carte : le primeur la tamponne avec son code.</li>
-          <li>Au <strong>10e tampon</strong>, votre boisson est offerte.</li>
+          <li><strong>Créez</strong> votre carte avec votre nom et votre numéro de téléphone.</li>
+          <li><strong>Commandez</strong> un café ou un jus et montrez cette carte : le primeur la tamponne avec son code.</li>
+          <li>À chaque boisson, <strong>un légume</strong> est tamponné dans votre panier ; au <strong>10e tampon</strong>, votre boisson est offerte.</li>
         </ol>
 
         <div class="install" id="install">
           <button class="btn btn--ghost" id="btn-install" type="button" hidden>
-            <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M5 19.5h14"/></svg>
-            Installer l’appli
+            <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/></svg>
+            Ajouter à l’écran d’accueil
           </button>
-          <p class="install-note">Gratuit, sans inscription. Vos tampons restent sur ce téléphone.</p>
+          <p class="install-note">Gratuit. Votre nom, votre numéro et vos tampons restent sur ce téléphone.</p>
         </div>
       </section>
     </main>
+
+    <div class="install-nudge" id="install-nudge" role="region" aria-labelledby="t-nudge" hidden>
+      <img class="nudge-icon" src="assets/icons/icon-192.png?v=2" alt="" width="44" height="44">
+      <div class="nudge-text">
+        <p class="nudge-title" id="t-nudge">L’appli sur votre écran d’accueil</p>
+        <p class="nudge-sub">Votre carte fidélité toujours à portée de main.</p>
+      </div>
+      <button class="btn btn--primary nudge-go" id="nudge-go" type="button">Ajouter</button>
+      <button class="nudge-close" id="nudge-close" type="button" aria-label="Plus tard"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
 
     <nav class="tabbar" aria-label="Navigation principale">
       <span class="tab-pill" aria-hidden="true"></span>
@@ -705,7 +729,7 @@
         </details>
         <details>
           <summary>Comment fonctionne la carte de fidélité&nbsp;?</summary>
-          <p>Elle est gratuite et sans inscription, dans l’onglet Fidélité. À chaque boisson, le primeur tamponne votre carte sur votre téléphone&nbsp;; au 10e tampon, une boisson est offerte.</p>
+          <p>Elle est gratuite, dans l’onglet Fidélité&nbsp;: pour la créer, il suffit de votre nom et de votre numéro de téléphone, qui restent sur votre téléphone. À chaque boisson, le primeur tamponne votre carte&nbsp;; au 10e tampon, une boisson est offerte.</p>
         </details>
       </div>
 
@@ -741,7 +765,7 @@
         </button>
       </header>
       <p class="pin-hint" id="pin-hint">Code commerçant</p>
-      <div class="pin-dots" id="pin-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="pin-dots" id="pin-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <div class="pin-qty" id="pin-qty" hidden>
         <button class="round-btn" type="button" id="qty-minus" aria-label="Un tampon de moins">−</button>
         <output id="qty-value" aria-live="polite">1</output>
@@ -754,6 +778,41 @@
         <span></span><button type="button" data-k="0">0</button><button type="button" data-k="del" aria-label="Effacer">⌫</button>
       </div>
       <button class="btn btn--primary btn--wide" id="pin-confirm" type="button" data-sfx="none" hidden>Tamponner</button>
+    </div>
+  </dialog>
+
+  <dialog class="sheet sheet--install" id="install-sheet" aria-labelledby="t-install">
+    <div class="sheet-inner">
+      <div class="sheet-grip" aria-hidden="true"></div>
+      <header class="sheet-head">
+        <h2 id="t-install">L’appli en raccourci</h2>
+        <button class="round-btn" type="button" data-close aria-label="Fermer">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <p class="install-lead">Ajoutez Café Laitue à votre <strong>écran d’accueil</strong> : l’icône s’ouvre comme une appli, en plein écran, même sans réseau, avec votre carte fidélité. Gratuit, sans passer par un store.</p>
+      <div class="install-native" id="install-native" hidden>
+        <button class="btn btn--primary btn--wide" id="install-native-btn" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/></svg> Installer l’appli</button>
+      </div>
+      <ol class="install-steps" id="install-steps-ios" hidden>
+        <li><span class="step-ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M8 7.5l4-4 4 4"/><path d="M8.5 10.5H6.5a1.5 1.5 0 0 0-1.5 1.5v7a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5h-2"/></svg></span><span>Touchez <strong>Partager</strong>, en bas de Safari (en haut sur iPad).</span></li>
+        <li><span class="step-ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/></svg></span><span>Choisissez <strong>«&nbsp;Sur l’écran d’accueil&nbsp;»</strong> (faites défiler la liste si besoin).</span></li>
+        <li><span class="step-ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Touchez <strong>Ajouter</strong> : l’icône Café Laitue rejoint vos applis.</span></li>
+      </ol>
+      <ol class="install-steps" id="install-steps-android" hidden>
+        <li><span class="step-ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5.5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="18.5" r="1.4" fill="currentColor"/></svg></span><span>Ouvrez le <strong>menu</strong> du navigateur (les trois points).</span></li>
+        <li><span class="step-ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/></svg></span><span>Choisissez <strong>«&nbsp;Installer l’application&nbsp;»</strong> ou <strong>«&nbsp;Ajouter à l’écran d’accueil&nbsp;»</strong>.</span></li>
+        <li><span class="step-ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Confirmez : l’icône Café Laitue rejoint vos applis.</span></li>
+      </ol>
+      <ol class="install-steps" id="install-steps-inapp" hidden>
+        <li><span class="step-ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5.5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="18.5" r="1.4" fill="currentColor"/></svg></span><span>Vous êtes dans le navigateur d’Instagram ou de Facebook : touchez le <strong>menu</strong> en haut à droite.</span></li>
+        <li><span class="step-ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg></span><span>Choisissez <strong>«&nbsp;Ouvrir dans le navigateur&nbsp;»</strong> (Safari ou Chrome).</span></li>
+        <li><span class="step-ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/></svg></span><span>Là, ajoutez la page à l’<strong>écran d’accueil</strong> : vous retrouverez la marche à suivre ici.</span></li>
+      </ol>
+      <div class="install-share">
+        <div class="install-qr" id="install-qr"></div>
+        <p><strong>À partager</strong> : faites scanner ce code à un ami, Café Laitue s’ouvrira sur son téléphone.</p>
+      </div>
     </div>
   </dialog>
 

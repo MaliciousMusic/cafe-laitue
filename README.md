@@ -2,12 +2,13 @@
 
 Site vitrine « monobloc » pensé comme une petite appli mobile pour **Café Laitue**, primeur gourmet au 20 rue Ballainvilliers, Clermont-Ferrand.
 
-- **Ouverture** : le logo s'assemble en grand au centre ; « Entrer » lance le **jingle** (le logo danse sur les notes et tamponne), puis il rétrécit jusqu'à sa place sur la devanture pendant que la boutique se construit, avec ses **petits bruits de chantier**. Une fois par visite ; `?intro` dans l'adresse le rejoue.
-- **Accueil** : la boutique reproduite en SVG animé (devanture, enseigne, vitrine éclairée, étal garni des fruits du mois, ardoise, le primeur devant la porte), le **tampon** qui s'assemble et la **typo rubanée** qui défile.
+- **Ouverture** : le logo s'assemble en grand au centre d'un **plateau de légumes** qui remplit l'écran (laitues, radis, poivrons, carottes, betteraves, herbes : comme la photo de l'enseigne) ; « Entrer » lance le **jingle**, les légumes **éclatent comme des bulles** du haut vers le bas, le logo danse sur les notes, tamponne, puis rétrécit jusqu'à sa place sur la devanture pendant que la boutique se construit, avec ses **petits bruits de chantier**. Une fois par visite ; `?intro` dans l'adresse le rejoue.
+- **Accueil** : la devanture **reproduite d'après la photo** en SVG animé : immeuble clermontois (enduit crème, fenêtres en pierre de Volvic, persiennes), devanture vert amande sur deux niveaux (pilastres à chapiteaux, garde-corps en fonte, consoles), store banne à barre bordeaux, vitrines sombres (ampoules, logo, « Café de spécialité »), deux bacs en bois à roulettes garnis des produits du mois, ardoise, terrasse, arbres, et Vincent devant la porte ; elle se construit avec ses petits bruits de chantier. Puis la rue vit, avec des personnages dessinés aussi finement que Vincent (vêtements ombrés, coutures, plis, chaussures, visages de profil) et **articulés** : la marche est calculée pied par pied (le pied posé reste collé au trottoir), le corps monte et descend, les bras balancent, la queue-de-cheval et la jupe suivent. Une passante au cabas Café Laitue (baguette et poireau), un cycliste (panier de légumes), une maman et sa poussette, un monsieur à casquette avec son café à emporter, une passante en robe jaune ; en terrasse, une cliente en marinière boit son latte et un client son jus pressé, gorgée après gorgée. Un petit cycle de vent fait plier les arbres, frémir le store et le parasol, et tomber quelques feuilles. Puis le **tampon** qui s'assemble et la **typo rubanée** (lettres blanches sur ruban vert) qui défile.
 - **Café** : la carte des cafés de spécialité façon lettres murales ; chaque boisson apparaît **en vue éclatée** (expresso, lait, mousse, glaçons…) puis **se prépare étape par étape** : grains moulus dans le porte-filtre, tassage, extraction sous la tête de groupe, lait versé au pichet. Le **procédé** s'affiche dessous et suit l'animation. Pour les cafés au lait, la caméra passe au-dessus de la tasse et **les mains de Vincent versent un latte art tiré au hasard** (cœur, cygne, tulipe ou rosette), avant son clin d'œil « Et voilà ! ». Versions glacées, V60 (rinçage, mouture, bloom, versements).
 - **Étals** : l'intérieur de la boutique (briques, mur vert, vins, épicerie) avec 9 cagettes qui suivent **le mois choisi** ; toucher une cagette ouvre la fiche du produit. Dessous, les **paniers de saison à prix fixe** (duo, famille, gourmand) composés avec les produits du mois, avec des **idées de plats**.
 - **Bar à jus** : en haut, **Vincent derrière son comptoir** presse les jus (le bras suit l'extracteur, le verre se remplit de la bonne couleur) ; en bas, **« Compose ton jus »** : 3, 5 ou 7 ingrédients parmi une quarantaine (fruits, légumes, aromates, épices), chacun avec ses **bienfaits** (allégations nutritionnelles autorisées), profil de goût, nom du jus, ticket à montrer au comptoir, et les classiques. Bascule vers la vraie photo de Vincent.
-- **Fidélité** : carte à 10 tampons dans le téléphone, validée par le **code du primeur**, installable comme une appli (PWA, fonctionne hors connexion).
+- **Fidélité** : une **carte en papier imprimée** façon fiche (un panier en osier à l'encre verte, « Nom », « Tél. », logo, compteur dans le coin) ; le client la **crée avec son nom et son numéro de téléphone**, écrits au stylo bille sur la carte (numéro en partie masqué). À chaque boisson, le primeur donne un **vrai coup de tampon** : un légume, **chacun de sa couleur d'encre** (bords irréguliers, manques d'encre), qui chevauche un peu les autres dans le panier ; le 10e tampon est le logo, boisson offerte. Validée par le **code du primeur** (6 chiffres).
+- **Installation** : invitation à ajouter l'appli à l'**écran d'accueil** (PWA, fonctionne hors connexion) : petit bandeau sur téléphone, marche à suivre adaptée (iPhone, Android, navigateur d'Instagram/Facebook) et, sur ordinateur, un encart avec un **QR code** à scanner (généré dans la page, sans bibliothèque : il suit l'adresse de la balise canonical).
 - **Petits sons** sur tout ce qui se touche (bulles des onglets, toc de la pancarte, tintements de la tasse qui s'assemble, filet de lait, plouf des fruits, xylophone des mois, « tchac » du tampon, murmure du primeur quand il parle…). Synthétisés dans le navigateur, sans fichier audio ; bouton haut-parleur en haut pour les couper. Sur iPhone, ils suivent le mode silencieux.
 
 Aucune dépendance, aucun build : HTML + CSS + JavaScript (modules ES) + SVG généré.
@@ -48,10 +49,10 @@ Avec un domaine (ex. `cafelaitue.fr`), `robots.txt`, `sitemap.xml` et `llms.txt`
 
 ### Code commerçant
 
-Le code (4 chiffres) n'est pas écrit dans le dépôt : seule son empreinte est dans `assets/js/config.js`. Pour le changer :
+Le code (6 chiffres) n'est pas écrit dans le dépôt : seule son empreinte est dans `assets/js/config.js`. **La démo utilise un code d'essai (000000) : à remplacer avant la mise en service.** Pour le changer :
 
 ```bash
-node tools/set-pin.mjs 4821
+node tools/set-pin.mjs 482193
 ```
 
 Puis publier. Penser aussi à compléter `mentions-legales.html` (passages surlignés en jaune).
@@ -96,7 +97,7 @@ Déjà en place :
 
 ## Carte de fidélité : fonctionnement et limites
 
-- Les tampons sont stockés **dans le navigateur du client** (aucun compte, aucune donnée collectée, pas de bandeau cookies nécessaire).
+- Le nom, le numéro de téléphone et les tampons sont stockés **dans le navigateur du client** : rien n'est envoyé, aucune donnée collectée, pas de bandeau cookies nécessaire.
 - Le primeur valide avec son code : seule l'empreinte SHA-256 du code est publiée, 5 essais maximum puis blocage d'une minute, 5 tampons maximum par passage.
 - Limite assumée d'une version sans serveur : un client très technique pourrait modifier sa carte, et vider les données du navigateur efface la carte. Pour une version infalsifiable (cartes nominatives, historique côté commerçant, plusieurs appareils), il faut un petit back-office (par exemple Supabase), à brancher sur `assets/js/screens/loyalty.js`.
 

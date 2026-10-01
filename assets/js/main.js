@@ -2,11 +2,12 @@
 // feuilles d'infos, installation (PWA) et chargement paresseux des scènes.
 
 import { anim, EASE, isReduced } from './lib/motion.js';
-import { openStatus, todayHours, parisNow } from './features/hours.js';
+import { openStatus, parisNow } from './features/hours.js';
 import { createStamp } from './scenes/stamp.js';
 import { dragScroll, pager } from './lib/hscroll.js';
 import { play as sfx, soundSupported, soundOn, setSound, onSoundChange } from './lib/sound.js';
 import { startSplash } from './features/splash.js';
+import { initInstall } from './features/install.js';
 
 // Code à jour : pas besoin de recharger quand un nouveau service worker prend la main (voir index.html)
 window.__clFresh = true;
@@ -224,7 +225,6 @@ $('#status')?.addEventListener('click', () => {
   ], { duration: 900, easing: 'ease-out', fill: 'none' });
   openSheet($('#infos'));
 });
-$('#today')?.addEventListener('click', () => openSheet($('#infos')));
 
 // --------------------------------------------------------------------------
 // Statut d'ouverture (à l'heure de Paris)
@@ -240,8 +240,6 @@ function refreshStatus() {
     else $('#sign-open-sub').textContent = st.sub;
     btn.setAttribute('aria-label', `${st.label}. Voir les horaires et infos pratiques`);
   }
-  const today = $('#today-hours');
-  if (today) today.textContent = `${todayHours()} · ${st.label.split(' · ')[0]}`;
   const { day } = parisNow();
   $$('#hours-table tr').forEach((tr) => tr.classList.toggle('is-today', Number(tr.dataset.day) === day));
   document.dispatchEvent(new CustomEvent('cl:status', { detail: st }));
@@ -308,6 +306,9 @@ async function backdrop() {
 }
 desk.addEventListener?.('change', backdrop);
 backdrop();
+
+// Invitation à installer l'appli (bandeau, explications, QR code)
+initInstall({ openSheet, desk });
 
 // --------------------------------------------------------------------------
 // Démarrage

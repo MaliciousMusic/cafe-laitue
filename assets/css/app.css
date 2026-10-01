@@ -203,10 +203,28 @@ h3 {
 .splash.is-leaving .splash-bg {
   opacity: 0;
 }
+/* Le plateau de légumes (comme sur la photo de l'enseigne), qui éclate en bulles à l'entrée */
+.splash-veg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.splash-veg svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.splash-veg--over {
+  z-index: 3;
+}
 .splash-logo {
   position: relative;
+  z-index: 2;
   width: min(68vw, 290px, 40vh);
   aspect-ratio: 1;
+  border-radius: 50%;
+  filter: drop-shadow(0 14px 22px rgba(12, 40, 20, 0.45));
 }
 .splash-dance,
 .splash-dance svg {
@@ -217,6 +235,7 @@ h3 {
 }
 .splash-actions {
   position: relative;
+  z-index: 4;
   display: grid;
   justify-items: center;
   gap: 2px;
@@ -250,7 +269,7 @@ h3 {
   font-family: var(--font-display);
   font-size: 21px;
   letter-spacing: 0.04em;
-  box-shadow: 0 12px 24px -14px rgba(18, 67, 43, 0.8);
+  box-shadow: 0 0 0 5px var(--cream), 0 14px 26px -10px rgba(10, 30, 16, 0.75);
   transition: transform 0.2s var(--ease-out);
 }
 .splash-enter .i {
@@ -290,7 +309,11 @@ h3 {
   outline-offset: 6px;
 }
 .splash-alt {
-  padding: 10px 14px;
+  margin-top: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--cream);
+  box-shadow: 0 6px 14px -8px rgba(10, 30, 16, 0.6);
   font-family: var(--font-hand);
   font-size: 16px;
   letter-spacing: 0.03em;
@@ -387,7 +410,7 @@ h3 {
   position: relative;
   align-self: stretch;
   flex: none;
-  width: 128px;
+  width: 138px;
   margin-right: -4px;
   border-radius: 0;
 }
@@ -399,7 +422,7 @@ h3 {
   left: 0;
   right: 0;
   top: calc(var(--sat) + 0px);
-  height: 68px;
+  height: 74px;
   perspective: 520px;
   transform-origin: 50% 7px;
   animation: sign-swing 3.4s ease-in-out infinite alternate;
@@ -415,7 +438,7 @@ h3 {
 }
 .sign-strings {
   position: absolute;
-  left: calc(50% - 59px);
+  left: calc(50% - 60px);
   top: 2px;
   width: 120px;
   height: 24px;
@@ -430,17 +453,17 @@ h3 {
   top: 3px;
   width: 9px;
   height: 9px;
-  margin-left: -2.5px;
+  margin-left: -4.5px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #f3dca0, #b8914a 60%, #8a6a2e);
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 .sign-board {
   position: absolute;
-  left: 8px;
-  right: 2px;
+  left: 6px;
+  right: 6px;
   top: 21px;
-  height: 44px;
+  height: 50px;
   transform-style: preserve-3d;
   transition: transform 0.9s cubic-bezier(0.3, 1.55, 0.45, 1);
 }
@@ -453,8 +476,9 @@ h3 {
   display: grid;
   place-content: center;
   justify-items: center;
-  gap: 1px;
-  border-radius: 9px;
+  gap: 2px;
+  border-radius: 10px;
+  text-align: center;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   box-shadow:
@@ -466,14 +490,14 @@ h3 {
 .sign-face b {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: 20px;
+  font-size: 23px;
   line-height: 1;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .sign-face small {
   font-family: var(--font-hand);
-  font-size: 12px;
+  font-size: 13.5px;
   line-height: 1;
   letter-spacing: 0.03em;
   white-space: nowrap;
@@ -495,34 +519,8 @@ h3 {
     inset 0 0 0 5px rgba(253, 251, 235, 0.35),
     0 6px 14px -6px rgba(124, 42, 27, 0.6);
 }
-.sign-dot {
-  position: absolute;
-  left: 9px;
-  top: 50%;
-  margin-top: -9px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #2f9b5c;
-  box-shadow: 0 0 0 3px rgba(47, 155, 92, 0.2);
-  animation: pulse 2.4s var(--ease-out) infinite;
-}
-.status[data-state='soon'] .sign-dot {
-  background: var(--carrot);
-  box-shadow: 0 0 0 3px rgba(233, 122, 44, 0.22);
-}
 .status[data-state='soon'] .sign-open small {
   color: #b85a18;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 3px rgba(47, 155, 92, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(47, 155, 92, 0.05);
-  }
 }
 
 .stage {
@@ -855,38 +853,9 @@ h3 {
 
 .lead {
   color: var(--ink-2);
-  font-size: 14.5px;
-  max-width: 38ch;
-}
-
-.today {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: var(--r-md);
-  background: var(--cream-2);
-  border: 1px dashed var(--sage);
-  text-align: left;
-  font-size: 13.5px;
-}
-.today-label {
-  font-family: var(--font-hand);
-  font-size: 15px;
-  letter-spacing: 0.05em;
-  color: var(--sage-ink);
-}
-.today-hours {
-  font-weight: 650;
-}
-.today-more {
   font-size: 12.5px;
-  font-weight: 650;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  color: var(--forest);
+  line-height: 1.4;
+  max-width: 44ch;
 }
 
 /* ---------- Le café ---------- */
@@ -2040,125 +2009,130 @@ h3 {
 
 /* ---------- Fidélité ---------- */
 
+/* La carte est une fiche imprimée avec un panier en osier : chaque tampon est un légume */
 .lcard {
   position: relative;
-  margin: 6px var(--gutter) 12px;
-  padding: 14px 14px 12px;
-  border-radius: 22px;
-  background:
-    radial-gradient(120% 90% at 100% 0%, rgba(132, 158, 131, 0.18), transparent 55%),
-    radial-gradient(90% 80% at 0% 100%, rgba(233, 122, 44, 0.08), transparent 60%),
-    var(--cream-2);
-  border: 2px solid var(--forest);
-  box-shadow: 0 2px 0 var(--forest), var(--shadow);
-  overflow: hidden;
+  max-width: 420px;
+  margin: 2px auto 10px;
+  padding: 0 var(--gutter);
 }
-.lcard::after {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  border: 1.5px dashed rgba(18, 67, 43, 0.25);
-  border-radius: 16px;
-  pointer-events: none;
-}
-.lcard-top {
-  display: grid;
-  grid-template-columns: 52px 1fr auto;
-  gap: 10px;
-  align-items: center;
-}
-.lcard-mark {
-  width: 52px;
-  height: 52px;
-}
-.lcard-mark svg {
-  width: 100%;
-  height: 100%;
-}
-.lcard-title {
-  font-family: var(--font-display);
-  font-size: 19px;
-  color: var(--forest);
-  line-height: 1;
-}
-.lcard-name input {
-  width: 100%;
-  margin-top: 3px;
-  padding: 2px 0;
-  border: 0;
-  border-bottom: 1.5px dotted var(--sage);
-  background: transparent;
-  font-family: var(--font-chalk);
-  font-size: 21px;
-  color: var(--forest);
-  outline: none;
-}
-.lcard-name input::placeholder {
-  color: var(--sage);
-}
-.lcard-count {
-  font-family: var(--font-display);
-  font-size: 30px;
-  color: var(--forest);
-  line-height: 1;
-}
-.lcard-count small {
-  font-size: 15px;
-  color: var(--sage-ink);
-}
-.slots {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  list-style: none;
-  margin: 12px 0 8px;
-  padding: 0;
-}
-.slot {
+.lbasket {
   position: relative;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  border: 1.5px dashed rgba(18, 67, 43, 0.35);
-  display: grid;
-  place-items: center;
-  color: rgba(18, 67, 43, 0.22);
 }
-.slot > .slot-ico {
-  width: 46%;
-  height: 46%;
-}
-.slot.is-gift {
-  border-style: solid;
-  border-color: var(--carrot);
-  color: var(--carrot);
-  background: rgba(233, 122, 44, 0.07);
-}
-.slot-ink {
-  position: absolute;
-  inset: -6%;
-  color: var(--forest);
-  opacity: 0.88;
-  pointer-events: none;
-}
-.slot-ink svg {
+.lbasket-svg {
+  display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
+  overflow: visible;
 }
 .lcard-foot {
+  margin-top: 6px;
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-2);
   text-align: center;
 }
-.lcard.is-full {
-  animation: glow 1.6s var(--ease-out) infinite alternate;
+.lcard-edit {
+  margin-left: 2px;
+  padding: 2px 2px;
+  font-weight: 700;
+  color: var(--forest);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
 }
-@keyframes glow {
+
+/* Création de la carte : nom et numéro de téléphone */
+.lform {
+  display: grid;
+  gap: 10px;
+  margin: 4px var(--gutter) 2px;
+  padding: 14px 14px 14px;
+  border-radius: var(--r-md);
+  background: var(--cream-2);
+  border: 1px solid var(--line);
+}
+.lform[hidden] {
+  display: none;
+}
+.lform-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1.1;
+  color: var(--forest);
+}
+.lform-text {
+  margin-top: -4px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.field {
+  display: grid;
+  gap: 4px;
+}
+.field-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--forest);
+}
+.field input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1.5px solid rgba(18, 67, 43, 0.28);
+  border-radius: var(--r-sm);
+  background: #fffdf5;
+  font-size: 16px;
+  color: var(--forest);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field input::placeholder {
+  color: rgba(18, 67, 43, 0.35);
+}
+.field input:focus-visible,
+.field input:focus {
+  border-color: var(--forest);
+  box-shadow: 0 0 0 3px rgba(18, 67, 43, 0.12);
+}
+.field input[aria-invalid='true'] {
+  border-color: #b8452f;
+  box-shadow: 0 0 0 3px rgba(184, 69, 47, 0.12);
+}
+.lform-error {
+  margin-top: -2px;
+  font-size: 13px;
+  font-weight: 650;
+  color: #b8452f;
+}
+.lform-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+.lform-actions:has(#lf-cancel:not([hidden])) {
+  grid-template-columns: 1fr auto;
+}
+.screen--loyalty .actions[hidden] {
+  display: none;
+}
+/* Carte complète : un halo orangé pulse autour du papier */
+.lbasket::before {
+  content: '';
+  position: absolute;
+  inset: 1% 1.1% 2.4%;
+  border-radius: 4.5% / 5.4%;
+  pointer-events: none;
+}
+.lcard.is-full .lbasket::before {
+  animation: card-glow 1.6s ease-in-out infinite alternate;
+}
+@keyframes card-glow {
   from {
-    box-shadow: 0 2px 0 var(--forest), 0 0 0 0 rgba(233, 122, 44, 0.3);
+    box-shadow: 0 0 0 0 rgba(233, 122, 44, 0.15);
   }
   to {
-    box-shadow: 0 2px 0 var(--forest), 0 0 0 10px rgba(233, 122, 44, 0);
+    box-shadow: 0 0 0 7px rgba(233, 122, 44, 0.32);
   }
 }
 
@@ -2212,18 +2186,156 @@ h3 {
   font-size: 12.5px;
   color: var(--sage-ink);
   text-align: center;
+  max-width: 36ch;
 }
 
-.stamp-fly {
-  position: fixed;
-  z-index: 60;
-  pointer-events: none;
+/* Bandeau « L'appli sur votre écran d'accueil » (téléphone, au-dessus des onglets) */
+.install-nudge {
+  position: absolute;
+  z-index: 6;
+  left: 10px;
+  right: 10px;
+  bottom: calc(var(--tab-h) + var(--sab) + 10px);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 9px 6px 9px 9px;
+  border-radius: 20px;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 40px -14px rgba(18, 67, 43, 0.55), 0 2px 6px rgba(18, 67, 43, 0.08);
+}
+.nudge-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  box-shadow: 0 2px 6px rgba(18, 67, 43, 0.25);
+}
+.nudge-title {
+  font-weight: 750;
+  font-size: 13.5px;
+  line-height: 1.2;
   color: var(--forest);
 }
-.stamp-fly svg {
+.nudge-sub {
+  margin-top: 1px;
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--ink-2);
+}
+.nudge-go {
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 13.5px;
+}
+.nudge-close {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--sage-ink);
+}
+.nudge-close .i {
+  width: 18px;
+  height: 18px;
+}
+.nudge-close:active {
+  background: var(--cream-2);
+}
+
+/* Feuille « L'appli en raccourci » : marche à suivre selon le téléphone + QR code */
+.install-lead {
+  margin: 2px 0 14px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.install-lead strong {
+  color: var(--forest);
+}
+.install-native {
+  margin-bottom: 14px;
+}
+.install-steps {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  counter-reset: st;
+}
+.install-steps li {
+  counter-increment: st;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--cream-2);
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.install-steps strong {
+  color: var(--forest);
+}
+.step-ico {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #fffdf5;
+  border: 1px solid var(--line);
+  color: #2f6fd6;
+}
+.step-ico::after {
+  content: counter(st);
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--forest);
+  color: var(--cream);
+  font-size: 11px;
+  font-weight: 800;
+}
+.install-share {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border-radius: var(--r-md);
+  border: 1.5px dashed rgba(18, 67, 43, 0.25);
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.install-share strong {
+  color: var(--forest);
+}
+.install-qr {
+  width: 112px;
+  aspect-ratio: 1;
+}
+.qr {
   width: 100%;
   height: 100%;
 }
+
+/* Encart du bureau : le QR code à scanner (masqué sur téléphone et dans l'appli installée) */
+.desk-install {
+  display: none;
+}
+
 .confetti {
   position: fixed;
   z-index: 61;
@@ -2491,10 +2603,10 @@ h3 {
   }
   .sign-board {
     top: 19px;
-    height: 40px;
+    height: 45px;
   }
   .sign-face b {
-    font-size: 18px;
+    font-size: 20px;
   }
 }
 
@@ -2521,7 +2633,7 @@ h3 {
     font-size: 18px;
   }
   .status {
-    width: 116px;
+    width: 126px;
   }
   .actions {
     grid-template-columns: 1fr 1fr;
@@ -2595,6 +2707,7 @@ h3 {
     font-size: 17px;
     letter-spacing: 0.06em;
     opacity: 0.85;
+    max-width: calc(50vw - 206px - 64px);
   }
   .desk-stamp {
     position: fixed;
@@ -2608,6 +2721,87 @@ h3 {
     width: 100%;
     height: 100%;
     overflow: visible;
+  }
+  .desk-install {
+    position: fixed;
+    z-index: 1;
+    right: max(24px, calc(50% - 206px - 336px));
+    top: 50%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    width: clamp(196px, calc(50vw - 206px - 64px), 282px);
+    padding: 18px 20px 20px;
+    border-radius: 24px;
+    background: var(--cream);
+    color: var(--forest);
+    transform: translateY(-50%) rotate(1.4deg);
+    box-shadow:
+      0 34px 70px -26px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(18, 67, 43, 0.08);
+  }
+  .desk-install::before {
+    content: '';
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    width: 64px;
+    height: 20px;
+    margin-left: -32px;
+    border-radius: 3px;
+    background: rgba(221, 230, 214, 0.85);
+    transform: rotate(-3deg);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  }
+  .desk-install-eyebrow {
+    font-family: var(--font-hand);
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: var(--sage-ink);
+  }
+  .desk-install h2 {
+    margin-top: -6px;
+    font-family: var(--font-display);
+    font-size: 23px;
+    line-height: 1.05;
+  }
+  .desk-qr {
+    width: 100%;
+    aspect-ratio: 1;
+  }
+  .desk-steps {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 5px;
+    font-size: 12.5px;
+    line-height: 1.35;
+    color: var(--ink-2);
+  }
+  .desk-steps strong {
+    color: var(--forest);
+  }
+  .desk-install-btn {
+    justify-self: start;
+    min-height: 38px;
+    padding: 6px 14px;
+    font-size: 13.5px;
+    line-height: 1.2;
+    white-space: normal;
+    text-align: center;
+  }
+  html.is-standalone .desk-install {
+    display: none;
+  }
+}
+
+/* Bureau étroit : l'encart se contente du QR code */
+@media (min-width: 880px) and (max-width: 1040px) and (min-height: 620px) {
+  .desk-steps li:not(:first-child) {
+    display: none;
+  }
+  .desk-install h2 {
+    font-size: 19px;
   }
 }
 
